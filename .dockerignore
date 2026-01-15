@@ -40,7 +40,6 @@ artifacts/
 *.meta
 *.obj
 *.pch
-*.pdb
 *.pgc
 *.pgd
 *.rsp
@@ -115,7 +114,6 @@ AppPackages/
 BundleArtifacts/
 Package.StoreAssociation.xml
 _pkginfo.txt
-*.[Cc]ache
 !*.[Cc]ache/
 ClientBin/
 ~$*
@@ -157,7 +155,6 @@ paket-files/
 __pycache__/
 *.pyc
 docs/_book
-test/
 logs
 npm-debug.log*
 yarn-debug.log*
@@ -179,7 +176,6 @@ bower_components
 build/Release
 jspm_packages/
 web_modules/
-*.tsbuildinfo
 .npm
 .eslintcache
 .stylelintcache
@@ -218,7 +214,6 @@ dist
 .DS_*
 **/*.backup.*
 **/*.back.*
-node_modules
 *.sublime*
 psd
 thumb
