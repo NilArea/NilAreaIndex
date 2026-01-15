@@ -1,84 +1,57 @@
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
-
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
-
-  --vt-c-indigo: #2c3e50;
-
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
-
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+  --theme-color: #70C000;
+  --theme-color-active: rgba(112, 192, 0, .6);
+  --w-alpha-5: rgba(255, 255, 255, .05);
+  --w-alpha-10: rgba(255, 255, 255, .1);
+  --w-alpha-15: rgba(255, 255, 255, .15);
+  --w-alpha-20: rgba(255, 255, 255, .2);
+  --w-alpha-30: rgba(255, 255, 255, .3);
+  --w-alpha-50: rgba(255, 255, 255, .5);
+  --w-alpha-60: rgba(255, 255, 255, .6);
+  --w-alpha-70: rgba(255, 255, 255, .7);
+  --w-alpha-80: rgba(255, 255, 255, .8);
+  --w-alpha-90: rgba(255, 255, 255, .9);
+  --bg-w-p: white;
+  --bg-w-s: rgb(245, 245, 245);
+  --bg-w-pure: white;
+  --bg-w-245: rgb(245, 245, 245);
+  --txt-w-pure: white;
+  --txt-b-pure: black;
+  --txt-b-tip: rgba(0, 0, 0, .8);
+  --b-alpha-5: rgba(0, 0, 0, .05);
+  --b-alpha-10: rgba(0, 0, 0, .1);
+  --b-alpha-15: rgba(0, 0, 0, .15);
+  --b-alpha-20: rgba(0, 0, 0, .2);
+  --b-alpha-30: rgba(0, 0, 0, .3);
+  --b-alpha-35: rgba(0, 0, 0, .35);
+  --b-alpha-40: rgba(0, 0, 0, .4);
+  --b-alpha-50: rgba(0, 0, 0, .5);
+  --b-alpha-60: rgba(0, 0, 0, .6);
+  --b-alpha-70: rgba(0, 0, 0, .7);
+  --b-alpha-80: rgba(0, 0, 0, .8);
+  --b-alpha-90: rgba(0, 0, 0, .9)
 }
 
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
-
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-
-  --section-gap: 160px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-  }
-}
-
-*,
-*::before,
-*::after {
+* {
   box-sizing: border-box;
-  margin: 0;
-  font-weight: normal;
+  outline: 0
+}
+
+html {
+  height: 100%
 }
 
 body {
-  min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  transition: color 0.5s,
-  background-color 0.5s;
-  line-height: 1.6;
-  font-family: Inter,
-  -apple-system,
-  BlinkMacSystemFont,
-  'Segoe UI',
-  Roboto,
-  Oxygen,
-  Ubuntu,
-  Cantarell,
-  'Fira Sans',
-  'Droid Sans',
-  'Helvetica Neue',
-  sans-serif;
-  font-size: 15px;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  height: 100%;
+  max-width: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  background-color: #333;
+  font-family: "PingFang SC", "Microsoft Yahei", "Helvetica Neue", Helvetica, "Segoe UI", Arial, sans-serif;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none
 }
