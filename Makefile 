@@ -1,0 +1,53 @@
+.PHONY: help install build test clean dev prod deploy
+.DEFAULT_GOAL := help
+
+help:
+	@echo "Available commands:"
+	@echo "  make install    Install all dependencies"
+	@echo "  make build      Build all projects"
+	@echo "  make test       Run all tests"
+	@echo "  make clean      Clean build outputs"
+	@echo "  make dev        Start development environment"
+	@echo "  make prod       Start production environment"
+	@echo "  make deploy     Deploy to production"
+
+install:
+	@echo "Installing frontend dependencies..."
+	cd frontend/webapp && npm ci
+	cd frontend/admin-panel && npm ci
+	cd frontend/shared && npm ci
+	@echo "Installing .NET dependencies..."
+	cd backend && dotnet restore
+
+build:
+	@echo "Building frontend..."
+	cd frontend/webapp && npm run build
+	cd frontend/admin-panel && npm run build
+	cd frontend/shared && npm run build
+	@echo "Building backend..."
+	cd backend && dotnet build --configuration Release
+
+test:
+	@echo "Testing frontend..."
+	cd frontend/webapp && npm test
+	cd frontend/admin-panel && npm test
+	@echo "Testing backend..."
+	cd backend && dotnet test
+
+clean:
+	@echo "Cleaning frontend..."
+	cd frontend/webapp && rm -rf dist node_modules
+	cd frontend/admin-panel && rm -rf dist node_modules
+	cd frontend/shared && rm -rf dist node_modules
+	@echo "Cleaning backend..."
+	cd backend && dotnet clean
+
+dev:
+	docker-compose -f infrastructure/docker/docker-compose.dev.yml up -d
+
+prod:
+	docker-compose -f infrastructure/docker/docker-compose.prod.yml up -d
+
+deploy:
+	@echo "Deploying to production..."
+	./scripts/deploy/deploy-prod.sh

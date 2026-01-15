@@ -1,0 +1,31 @@
+{
+  "name": "nilarea",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend/webapp",
+    "dev:webapp": "npm run dev --workspace=frontend/webapp",
+    "dev:admin": "npm run dev --workspace=frontend/admin-panel",
+    "build": "npm run build --workspace=frontend/webapp",
+    "build:all": "npm run build --workspaces",
+    "preview": "npm run preview --workspace=frontend/webapp",
+    "preview:webapp": "npm run preview --workspace=frontend/webapp",
+    "preview:admin": "npm run preview --workspace=frontend/admin-panel"
+  },
+  "workspaces": [
+    "frontend/webapp",
+    "frontend/admin-panel",
+    "frontend/shared"
+  ],
+  "dependencies": {
+    "vue": "^3.5.26"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.3",
+    "vite": "^7.3.0",
+    "vite-plugin-vue-devtools": "^8.0.5"
+  }
+}
