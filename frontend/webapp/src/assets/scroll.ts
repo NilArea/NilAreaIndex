@@ -1,6 +1,7 @@
 import $ from 'jquery';
 
 const $body = $('html, body');
+
 export function navScroll(trigger: JQuery) {
   trigger.on('click', function(e) {
     e.preventDefault();

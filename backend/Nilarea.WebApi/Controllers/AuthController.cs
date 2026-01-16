@@ -12,12 +12,10 @@ public class AuthController(
     IValidator<RegisterRequest> registerRequestValidator
 ) : ControllerBase
 {
-
-
     // ============ 接口定义 ============
 
     /// <summary>
-    /// 用户注册（使用邮箱）
+    ///     用户注册（使用邮箱）
     /// </summary>
     /// <param name="request">注册信息</param>
     /// <returns>注册结果</returns>
@@ -36,7 +34,7 @@ public class AuthController(
     }
 
     /// <summary>
-    /// 用户登录
+    ///     用户登录
     /// </summary>
     /// <param name="request">登录凭证</param>
     /// <returns>登录结果和令牌</returns>
@@ -50,7 +48,7 @@ public class AuthController(
     }
 
     /// <summary>
-    /// 验证邮箱
+    ///     验证邮箱
     /// </summary>
     /// <param name="request">验证令牌</param>
     /// <returns>验证结果</returns>
@@ -64,7 +62,7 @@ public class AuthController(
     }
 
     /// <summary>
-    /// 重发验证邮件
+    ///     重发验证邮件
     /// </summary>
     /// <param name="request">邮箱地址</param>
     /// <returns>操作结果</returns>
@@ -78,7 +76,7 @@ public class AuthController(
     }
 
     /// <summary>
-    /// 更新用户名（需要认证）
+    ///     更新用户名（需要认证）
     /// </summary>
     /// <param name="request">新用户名</param>
     /// <returns>更新结果</returns>
@@ -94,7 +92,7 @@ public class AuthController(
     }
 
     /// <summary>
-    /// 获取当前用户信息（需要认证）
+    ///     获取当前用户信息（需要认证）
     /// </summary>
     /// <returns>用户信息</returns>
     [HttpGet("me")]

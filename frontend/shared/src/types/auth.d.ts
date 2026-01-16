@@ -48,10 +48,10 @@ export namespace dto {
 }
 
 /* 便捷类型导出（可选） */
-export type RegisterReq  = dto.auth.RegisterRequest;
-export type RegisterRes  = dto.auth.RegisterResponse;
-export type LoginReq     = dto.auth.LoginRequest;
-export type LoginRes     = dto.auth.LoginResponse;
+export type RegisterReq = dto.auth.RegisterRequest;
+export type RegisterRes = dto.auth.RegisterResponse;
+export type LoginReq = dto.auth.LoginRequest;
+export type LoginRes = dto.auth.LoginResponse;
 export type UpdUsernameReq = dto.auth.UpdateUsernameRequest;
 export type VerifyEmailReq = dto.auth.VerifyEmailRequest;
 export type ResendVerifyReq = dto.auth.ResendVerificationRequest;

@@ -16,11 +16,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Orleans.Server" Version="9.2.1" />
+        <PackageReference Include="Microsoft.Orleans.Server" Version="9.2.1"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Nilarea.Grains\Nilarea.Grains.csproj" />
+        <ProjectReference Include="..\Nilarea.Grains\Nilarea.Grains.csproj"/>
     </ItemGroup>
 
 </Project>

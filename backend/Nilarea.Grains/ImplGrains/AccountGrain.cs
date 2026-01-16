@@ -5,5 +5,4 @@ namespace NilArea.Grains.ImplGrains;
 
 public class AccountGrain(ILogger<AccountGrain> logger) : Grain, IAccountGrain
 {
-
 }

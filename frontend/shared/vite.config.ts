@@ -10,7 +10,7 @@ export default defineConfig({
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'vite',
       fileName: (format) => `index.${format}.js`,
-      formats: ['cjs','umd','es']
+      formats: ['cjs', 'umd', 'es']
     },
     rollupOptions: {
       external: ['vue'],

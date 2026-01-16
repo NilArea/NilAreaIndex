@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-$(function(){
+$(function() {
   $('#link-contact-me').on('click', function(e) {
     e.preventDefault();
     location.href = 'mailto:qianxilee232@163.com';

@@ -35,7 +35,7 @@
       </div>
     </div>
     <div id="graph-2">
-      <LoginComponent/>
+      <LoginComponent />
     </div>
     <div id="graph-3">
     </div>
@@ -48,7 +48,7 @@ import FooterComponent from './components/FooterComponent.vue';
 import LoginComponent from './components/LoginComponent.vue';
 import { navScroll } from './assets/scroll.ts';
 
-$(function(){
+$(function() {
   $('#top-bg').addClass('loaded');
 
   const $nav = $('#nav-bar');
@@ -76,7 +76,7 @@ $(function(){
   });
   checkSticky();
 
-  navScroll($('.nav-link[data-target]'))
+  navScroll($('.nav-link[data-target]'));
 });
 </script>
 

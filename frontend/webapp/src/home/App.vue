@@ -20,7 +20,7 @@
 import FooterComponent from '../components/FooterComponent.vue';
 import { navScroll } from '../assets/scroll.ts';
 
-$(function(){
+$(function() {
   $('#top-bg').addClass('loaded');
 
   const $nav = $('#nav-bar');
@@ -47,7 +47,7 @@ $(function(){
     }
   });
   checkSticky();
-  navScroll($('.nav-link[data-target]'))
+  navScroll($('.nav-link[data-target]'));
 });
 </script>
 

@@ -9,11 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\shared-libs\Nilarea.Interfaces\Nilarea.Interfaces.csproj" />
+        <ProjectReference Include="..\shared-libs\Nilarea.Interfaces\Nilarea.Interfaces.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Orleans.Sdk" Version="9.2.1" />
+        <PackageReference Include="Microsoft.Orleans.Sdk" Version="9.2.1"/>
     </ItemGroup>
 
 </Project>

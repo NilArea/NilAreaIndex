@@ -1,7 +1,7 @@
 namespace NilArea.Contracts.Dto;
 
 /// <summary>
-/// 用户注册请求
+///     用户注册请求
 /// </summary>
 public class RegisterRequest
 {
@@ -11,7 +11,7 @@ public class RegisterRequest
 }
 
 /// <summary>
-/// 用户注册响应
+///     用户注册响应
 /// </summary>
 public class RegisterResponse
 {
@@ -22,7 +22,7 @@ public class RegisterResponse
 }
 
 /// <summary>
-/// 登录请求
+///     登录请求
 /// </summary>
 public class LoginRequest
 {
@@ -31,7 +31,7 @@ public class LoginRequest
 }
 
 /// <summary>
-/// 登录响应
+///     登录响应
 /// </summary>
 public class LoginResponse
 {
@@ -43,7 +43,7 @@ public class LoginResponse
 }
 
 /// <summary>
-/// 更新用户名请求
+///     更新用户名请求
 /// </summary>
 public class UpdateUsernameRequest
 {
@@ -51,7 +51,7 @@ public class UpdateUsernameRequest
 }
 
 /// <summary>
-/// 邮箱验证请求
+///     邮箱验证请求
 /// </summary>
 public class VerifyEmailRequest
 {
@@ -59,7 +59,7 @@ public class VerifyEmailRequest
 }
 
 /// <summary>
-/// 重发验证邮件请求
+///     重发验证邮件请求
 /// </summary>
 public class ResendVerificationRequest
 {

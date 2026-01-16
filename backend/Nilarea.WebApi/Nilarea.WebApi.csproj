@@ -15,12 +15,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\shared-libs\Nilarea.Contracts\Nilarea.Contracts.csproj" />
-      <ProjectReference Include="..\shared-libs\Nilarea.Interfaces\Nilarea.Interfaces.csproj" />
+        <ProjectReference Include="..\shared-libs\Nilarea.Contracts\Nilarea.Contracts.csproj"/>
+        <ProjectReference Include="..\shared-libs\Nilarea.Interfaces\Nilarea.Interfaces.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Orleans.Client" Version="9.2.1" />
+        <PackageReference Include="Microsoft.Orleans.Client" Version="9.2.1"/>
     </ItemGroup>
 
 </Project>

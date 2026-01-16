@@ -24,11 +24,11 @@ public class GlobalExceptionHandler(
         {
             HttpContext = httpContext,
             Exception = exception,
-            ProblemDetails = new ProblemDetails()
+            ProblemDetails = new ProblemDetails
             {
                 Type = exception.GetType().Name,
                 Title = "An Error Occured",
-                Detail = exception.Message,
+                Detail = exception.Message
             }
         });
     }
