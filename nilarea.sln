@@ -1,17 +1,17 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api-gateway", "backend\api-gateway\api-gateway.csproj", "{DD630EB1-4F54-49C1-BFD5-6BDE60C4B83A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nilarea.WebApi", "backend\Nilarea.WebApi\Nilarea.WebApi.csproj", "{DD630EB1-4F54-49C1-BFD5-6BDE60C4B83A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "grains", "backend\grains\grains.csproj", "{7C4E2F9A-811C-4E8F-8BE8-FEA5BCE8A99C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nilarea.Grains", "backend\Nilarea.Grains\Nilarea.Grains.csproj", "{7C4E2F9A-811C-4E8F-8BE8-FEA5BCE8A99C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "orleans-silo", "backend\orleans-silo\orleans-silo.csproj", "{EA9AEF76-1734-4045-849E-34C6B38E3A4D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nilarea.Silo", "backend\Nilarea.Silo\Nilarea.Silo.csproj", "{EA9AEF76-1734-4045-849E-34C6B38E3A4D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ShareLib", "ShareLib", "{497B1FA8-F761-484F-941F-4ABF56FAF6F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "common", "backend\shared-libs\common\common.csproj", "{3675EC56-65AD-4A88-B022-845D642B3AE5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nilarea.Common", "backend\shared-libs\Nilarea.Common\Nilarea.Common.csproj", "{3675EC56-65AD-4A88-B022-845D642B3AE5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "contracts", "backend\shared-libs\contracts\contracts.csproj", "{E804AD23-C631-4789-885B-B89B09BF64D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nilarea.Contracts", "backend\shared-libs\Nilarea.Contracts\Nilarea.Contracts.csproj", "{E804AD23-C631-4789-885B-B89B09BF64D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "igrains", "backend\shared-libs\igrains\igrains.csproj", "{A616AB00-2DEB-4DD1-AEB5-5A5D3A084E34}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nilarea.Interfaces", "backend\shared-libs\Nilarea.Interfaces\Nilarea.Interfaces.csproj", "{A616AB00-2DEB-4DD1-AEB5-5A5D3A084E34}"
 EndProject
 Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution

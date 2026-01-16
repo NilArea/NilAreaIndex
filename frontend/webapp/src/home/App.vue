@@ -5,48 +5,20 @@
         <span id="nav-logo-main"></span>
     </span>
       <div id="nav-link-container">
-        <a class="nav-link" data-target="#0">首页</a>
-        <a class="nav-link" data-target="graph-1">关于</a>
-        <a class="nav-link" data-target="graph-2">XX</a>
-        <a class="nav-link" data-target="graph-3">XX</a>
+        <a class="nav-link" href="/">首页</a>
         <a class="nav-link" href="/home">博客</a>
       </div>
     </div>
     <div id="top-bg"></div>
-    <div id="headline-container">
-      <h1>ツ箫声断丶何处莫凭栏</h1>
-      <span class="heading-underline"></span>
-      <h2>
-        <span>/*</span>
-        这里是浅析的个人网页
-        <span>*/</span>
-      </h2>
-    </div>
     <div id="graph-1" nav-trigger>
-      <h3>关于我</h3>
-      <span class="heading-underline-1"></span>
-      <div class="tags-container">
-        <span>00 后</span>
-        <span>独立开发者</span>
-        <span>二次元</span>
-      </div>
-      <div class="about-content">
-        <p>热爱自由</p>
-      </div>
-    </div>
-    <div id="graph-2">
-      <LoginComponent/>
-    </div>
-    <div id="graph-3">
     </div>
     <FooterComponent />
   </div>
 </template>
 
 <script setup>
-import FooterComponent from './components/FooterComponent.vue';
-import LoginComponent from './components/LoginComponent.vue';
-import { navScroll } from './assets/scroll.ts';
+import FooterComponent from '../components/FooterComponent.vue';
+import { navScroll } from '../assets/scroll.ts';
 
 $(function(){
   $('#top-bg').addClass('loaded');
@@ -75,14 +47,13 @@ $(function(){
     }
   });
   checkSticky();
-
   navScroll($('.nav-link[data-target]'))
 });
 </script>
 
 <style scoped>
 #home {
-  height: 100%;
+  height: 30%;
 }
 
 h1 {
@@ -264,7 +235,7 @@ h5 {
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
-  background-image: url(/shop-bg.png);
+  background-image: url(/fufu-bg.png);
   transition: transform 1.5s, opacity 1s;
   transform: scale(1.05);
   opacity: 0

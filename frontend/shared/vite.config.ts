@@ -8,8 +8,9 @@ export default defineConfig({
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'NilareaShared',
-      fileName: (format) => `shared.${format}.js`
+      name: 'vite',
+      fileName: (format) => `index.${format}.js`,
+      formats: ['cjs','umd','es']
     },
     rollupOptions: {
       external: ['vue'],

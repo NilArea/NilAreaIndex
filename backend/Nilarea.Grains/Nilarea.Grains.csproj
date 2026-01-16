@@ -5,11 +5,15 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <RootNamespace>NilArea.IGrains</RootNamespace>
+        <RootNamespace>NilArea.Grains</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="9.2.1" />
+      <ProjectReference Include="..\shared-libs\Nilarea.Interfaces\Nilarea.Interfaces.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Orleans.Sdk" Version="9.2.1" />
     </ItemGroup>
 
 </Project>
