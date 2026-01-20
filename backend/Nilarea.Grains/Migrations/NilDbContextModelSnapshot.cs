@@ -65,13 +65,10 @@ namespace NilArea.Grains.Migrations
                     b.HasIndex("CreatedAt")
                         .HasDatabaseName("IX_AccountUser_CreatedAt");
 
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("UK_AccountUser_Email_Active")
-                        .HasFilter("DeleteAt IS NULL");
-
                     b.HasIndex("Email", "DeleteAt")
-                        .HasDatabaseName("IX_AccountUser_Email_DeleteAt");
+                        .IsUnique()
+                        .HasDatabaseName("IX_AccountUser_Email_DeleteAt")
+                        .HasFilter("DeleteAt IS NULL");
 
                     b.ToTable("AccountUser", (string)null);
                 });

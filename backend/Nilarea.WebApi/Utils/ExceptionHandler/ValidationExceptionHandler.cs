@@ -2,7 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace NilArea.Api.Utils;
+namespace NilArea.Api.Utils.ExceptionHandler;
 
 public class ValidationExceptionHandler(
     ILogger<GlobalExceptionHandler> logger,

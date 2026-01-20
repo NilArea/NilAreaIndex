@@ -27,5 +27,16 @@ public static class Extensions
         {
             return configuration.GetValue<T>(key) ?? defaultValue;
         }
+
+        public string SafeGetConnectionString(string key)
+        {
+            return configuration.GetConnectionString(key) ??
+                   throw new KeyNotFoundException($"\"{key}\" is a required configure key");
+        }
+
+        public string SafeGetConnectionString(string key, string defaultValue)
+        {
+            return configuration.GetConnectionString(key) ?? defaultValue;
+        }
     }
 }

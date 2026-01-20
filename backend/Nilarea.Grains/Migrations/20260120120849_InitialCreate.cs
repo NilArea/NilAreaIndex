@@ -12,15 +12,11 @@ namespace NilArea.Grains.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.EnsureSchema(
-                name: "NilArea");
-
             migrationBuilder.AlterDatabase()
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
                 name: "AccountUser",
-                schema: "NilArea",
                 columns: table => new
                 {
                     UserId = table.Column<long>(type: "bigint", nullable: false),
@@ -43,21 +39,13 @@ namespace NilArea.Grains.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_AccountUser_CreatedAt",
-                schema: "NilArea",
                 table: "AccountUser",
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AccountUser_Email_DeleteAt",
-                schema: "NilArea",
                 table: "AccountUser",
-                columns: new[] { "Email", "DeleteAt" });
-
-            migrationBuilder.CreateIndex(
-                name: "UK_AccountUser_Email_Active",
-                schema: "NilArea",
-                table: "AccountUser",
-                column: "Email",
+                columns: new[] { "Email", "DeleteAt" },
                 unique: true,
                 filter: "DeleteAt IS NULL");
         }
@@ -66,8 +54,7 @@ namespace NilArea.Grains.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AccountUser",
-                schema: "NilArea");
+                name: "AccountUser");
         }
     }
 }

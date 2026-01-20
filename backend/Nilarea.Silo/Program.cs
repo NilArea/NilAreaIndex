@@ -1,41 +1,25 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NilArea.Common.Utils;
 using NilArea.Contracts;
-using NilArea.Grains.DbContext;
-using NilArea.Grains.Repositories;
+using NilArea.Silo;
 using Orleans.Configuration;
-using StackExchange.Redis;
 
 var builder = Host.CreateDefaultBuilder(args);
 
 builder.UseOrleans(siloBuilder =>
 {
+    var configuration = siloBuilder.Configuration;
     siloBuilder
-        .ConfigureServices(services =>
-        {
-            services
-                .AddContractsValidators()
-                //Tools
-                .AddOptions<SnowflakeIdGeneratorOptions>().Services
-                .AddSingleton<IIdGenerator<long>, SnowflakeIdGenerator>()
-                .AddSingleton<IPasswordHasher, BCryptPasswordHasher>()
-                //DbContext
-                .AddSingleton<NilDbContext>()
-                //Redis
-                .AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(sp =>
-                {
-                    var cfg = siloBuilder.Configuration;
-                    return ConnectionMultiplexer.Connect(cfg.SafeGetConfigureValue("REDIS_CONNECTION_STRING"));
-                })
-                //Repository
-                .AddSingleton<IAccountRepository, AccountRepository>();
-        })
+        .ConfigureServices(services => services
+            .AddContractsValidators()
+            .AddNilareaTools(configuration)
+            .AddNilareaDbContext(configuration)
+            .AddNilareaRepositories(configuration))
         .Configure<ClusterOptions>(options =>
         {
-            options.ClusterId = "nilarea-cluster";
-            options.ServiceId = "nilarea-service";
+            options.ClusterId = configuration.SafeGetConfigureValue("ClusterOptions:ClusterId");
+            options.ServiceId = configuration.SafeGetConfigureValue("ClusterOptions:ServiceId");
         })
         .UseLocalhostClustering()
         .ConfigureLogging(logging => logging.AddConsole());

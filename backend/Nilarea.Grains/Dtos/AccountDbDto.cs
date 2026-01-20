@@ -57,15 +57,11 @@ public class AccountUserEntityConfig : IEntityTypeConfiguration<AccountDbDto>
             .HasColumnType("datetime(6)");
 
         /* ---------- 索引 ---------- */
-        // 未删除邮箱唯一
-        builder.HasIndex(e => e.Email)
-            .IsUnique()
-            .HasFilter($"{nameof(AccountDbDto.DeleteAt)} IS NULL")
-            .HasDatabaseName("UK_AccountUser_Email_Active");
-
-        // 组合查询辅助
+        // 唯一作用：保证未删除邮箱唯一 + 同时覆盖 Email / Email+DeleteAt 查询
         builder.HasIndex(e => new { e.Email, e.DeleteAt })
-            .HasDatabaseName("IX_AccountUser_Email_DeleteAt");
+            .HasDatabaseName("IX_AccountUser_Email_DeleteAt")
+            .IsUnique()
+            .HasFilter($"{nameof(AccountDbDto.DeleteAt)} IS NULL");
 
         // 时间排序/分页
         builder.HasIndex(e => e.CreatedAt)

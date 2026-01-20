@@ -1,5 +1,5 @@
 using FluentValidation;
-using NilArea.Api.Utils;
+using NilArea.Api.Utils.ExceptionHandler;
 using NilArea.Api.Utils.Helpers;
 using NilArea.Contracts;
 using Orleans.Configuration;
@@ -19,6 +19,7 @@ builder.UseOrleansClient(clientBuilder =>
 
 builder.Services
     .AddProblemDetails()
+    .AddExceptionHandler<OrleansExceptionHandler>()
     .AddExceptionHandler<ValidationExceptionHandler>()
     .AddExceptionHandler<GlobalExceptionHandler>();
 

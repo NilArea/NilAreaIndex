@@ -3,22 +3,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace NilArea.Api.Utils.ExceptionHandler;
 
-public class GlobalExceptionHandler(
+public class OrleansExceptionHandler(
     ILogger<GlobalExceptionHandler> logger,
     IProblemDetailsService problemDetailsService
 ) : IExceptionHandler
 {
-    public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext,
-        Exception exception,
+    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception,
         CancellationToken cancellationToken)
     {
-        logger.LogError(exception, "Unhandled exception");
+        if (exception is not OrleansException)
+            return false;
 
-        httpContext.Response.StatusCode = exception switch
-        {
-            _ => StatusCodes.Status500InternalServerError
-        };
+        logger.LogError(exception, "OrleansException Occurred");
+
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
         return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
         {
@@ -26,9 +24,8 @@ public class GlobalExceptionHandler(
             Exception = exception,
             ProblemDetails = new ProblemDetails
             {
-                Type = exception.GetType().Name,
                 Title = "An Error Occured",
-                Detail = exception.Message
+                Status = StatusCodes.Status500InternalServerError
             }
         });
     }

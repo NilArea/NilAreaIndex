@@ -12,8 +12,8 @@ using NilArea.Grains.DbContext;
 namespace NilArea.Grains.Migrations
 {
     [DbContext(typeof(NilDbContext))]
-    [Migration("20260120054313_AddAccountUser")]
-    partial class AddAccountUser
+    [Migration("20260120120849_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -68,13 +68,10 @@ namespace NilArea.Grains.Migrations
                     b.HasIndex("CreatedAt")
                         .HasDatabaseName("IX_AccountUser_CreatedAt");
 
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("UK_AccountUser_Email_Active")
-                        .HasFilter("DeleteAt IS NULL");
-
                     b.HasIndex("Email", "DeleteAt")
-                        .HasDatabaseName("IX_AccountUser_Email_DeleteAt");
+                        .IsUnique()
+                        .HasDatabaseName("IX_AccountUser_Email_DeleteAt")
+                        .HasFilter("DeleteAt IS NULL");
 
                     b.ToTable("AccountUser", (string)null);
                 });

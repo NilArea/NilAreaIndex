@@ -292,3 +292,5 @@ FodyWeavers.xsd
 **/secrets
 **/package-lock.json
 **/pnpm-lock.yaml
+
+**/DesignTimeDbContextFactory.cs

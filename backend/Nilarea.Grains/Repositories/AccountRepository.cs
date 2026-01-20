@@ -29,13 +29,13 @@ public class AccountRepository(
     public async ValueTask<bool> ExistsAccountAsync(string email)
     {
         return await dbContext.AccountUsers.AnyAsync(au =>
-            au.Email == email && (au.DeleteAt == null || au.DeleteAt > DateTime.UtcNow));
+            au.Email == email && au.DeleteAt == null);
     }
 
     public async ValueTask<(long, DateTime)> InsertAccount(RegisterRequest accountInfo)
     {
         if (await ExistsAccountAsync(accountInfo.Email))
-            throw new AccountException("Account already exists.", AccountAction.Register);
+            throw new AccountException("Email already registered", AccountAction.Register);
         var uid = idGenerator.NextId();
         var add = new AccountDbDto
         {
@@ -52,6 +52,7 @@ public class AccountRepository(
         }
         catch (DbUpdateException ex)when (ex.InnerException is MySqlException { Number: 1062 })
         {
+            logger.LogError(ex, "");
             throw new AccountException("Account already exists.", AccountAction.Register);
         }
 

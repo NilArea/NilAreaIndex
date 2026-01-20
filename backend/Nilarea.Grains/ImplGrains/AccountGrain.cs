@@ -23,7 +23,7 @@ public class AccountGrain(
     {
         var validate = await registerRequestValidator.ValidateAsync(request);
         if (!validate.IsValid)
-            throw new AccountException(validate.ToString());
+            throw new AccountException(validate.ToString(), AccountAction.Register);
         if (await accountRepository.ExistsAccountAsync(request.Email))
             throw new AccountException("Email already registered", AccountAction.Register);
         var (uid, ca) = await accountRepository.InsertAccount(request);
