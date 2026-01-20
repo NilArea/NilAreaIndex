@@ -1,24 +1,29 @@
+using Orleans;
+
 namespace NilArea.Contracts.Dto;
 
 /// <summary>
 ///     用户注册请求
 /// </summary>
+[GenerateSerializer]
+[Alias("NilArea.Contracts.Dto.RegisterRequest")]
 public class RegisterRequest
 {
-    public string Email { get; set; }
-    public string Password { get; set; }
-    public string Username { get; set; }
+    [Id(0)] public string Email { get; set; } = string.Empty;
+    [Id(1)] public string Password { get; set; } = string.Empty;
+    [Id(2)] public string Username { get; set; } = string.Empty;
 }
 
 /// <summary>
 ///     用户注册响应
 /// </summary>
+[GenerateSerializer]
 public class RegisterResponse
 {
-    public Guid UserId { get; set; }
-    public string Email { get; set; }
-    public string Username { get; set; }
-    public DateTime CreatedAt { get; set; }
+    [Id(0)] public long UserId { get; set; }
+    [Id(1)] public string Email { get; set; } = string.Empty;
+    [Id(2)] public string Username { get; set; } = string.Empty;
+    [Id(3)] public DateTime CreatedAt { get; set; }
 }
 
 /// <summary>
@@ -26,8 +31,8 @@ public class RegisterResponse
 /// </summary>
 public class LoginRequest
 {
-    public string Email { get; set; }
-    public string Password { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -36,9 +41,9 @@ public class LoginRequest
 public class LoginResponse
 {
     public Guid UserId { get; set; }
-    public string Email { get; set; }
-    public string Username { get; set; }
-    public string Token { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
     public DateTime TokenExpiry { get; set; }
 }
 
@@ -47,7 +52,7 @@ public class LoginResponse
 /// </summary>
 public class UpdateUsernameRequest
 {
-    public string NewUsername { get; set; }
+    public string NewUsername { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -55,7 +60,7 @@ public class UpdateUsernameRequest
 /// </summary>
 public class VerifyEmailRequest
 {
-    public string VerificationToken { get; set; }
+    public string VerificationToken { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -63,5 +68,5 @@ public class VerifyEmailRequest
 /// </summary>
 public class ResendVerificationRequest
 {
-    public string Email { get; set; }
+    public string Email { get; set; } = string.Empty;
 }

@@ -9,9 +9,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="..\..\.dockerignore">
+        <Content Include="..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="appsettings.Development.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
     <ItemGroup>

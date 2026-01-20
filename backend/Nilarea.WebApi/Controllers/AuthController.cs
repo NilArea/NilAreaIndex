@@ -28,9 +28,9 @@ public class AuthController(
         if (!result.IsValid)
             throw new ValidationException(result.Errors);
         var ag = clusterClient.GetGrain<IAccountGrain>(Guid.NewGuid());
-        // 冥等实现：验证邮箱格式、检查邮箱是否已注册、创建用户记录
-        // 返回用户ID（唯一）、邮箱、初始用户名
-        return Ok(new RegisterResponse());
+        if (await ag.ExistEmailAsync(request.Email))
+            return BadRequest("Email already registered");
+        return Ok(await ag.RegisterUserAsync(request));
     }
 
     /// <summary>
