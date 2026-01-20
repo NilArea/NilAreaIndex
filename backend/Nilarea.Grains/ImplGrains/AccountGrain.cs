@@ -10,7 +10,8 @@ namespace NilArea.Grains.ImplGrains;
 public class AccountGrain(
     ILogger<AccountGrain> logger,
     IAccountRepository accountRepository,
-    IValidator<RegisterRequest> registerRequestValidator
+    IValidator<RegisterRequest> registerRequestValidator,
+    IValidator<LoginRequest> loginRequestValidator
 ) : Grain, IAccountGrain
 {
     public async ValueTask<bool> ExistEmailAsync(string email)
@@ -26,13 +27,16 @@ public class AccountGrain(
             throw new AccountException(validate.ToString(), AccountAction.Register);
         if (await accountRepository.ExistsAccountAsync(request.Email))
             throw new AccountException("Email already registered", AccountAction.Register);
-        var (uid, ca) = await accountRepository.InsertAccount(request);
-        return new RegisterResponse
-        {
-            Email = request.Email,
-            Username = request.Username,
-            CreatedAt = ca,
-            UserId = uid
-        };
+        return await accountRepository.InsertAccountAsync(request);
+    }
+
+    public async ValueTask<LoginResponse> LoginAsync(LoginRequest request)
+    {
+        var validate = await loginRequestValidator.ValidateAsync(request);
+        if (!validate.IsValid)
+            throw new AccountException(validate.ToString(), AccountAction.Login);
+        if (!await accountRepository.ExistsAccountAsync(request.Email))
+            throw new AccountException("Email is not registered", AccountAction.Login);
+        return await accountRepository.VerifyLoginInfoAsync(request);
     }
 }

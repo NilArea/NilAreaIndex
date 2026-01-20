@@ -9,7 +9,8 @@ namespace NilArea.Api.Controllers;
 public class AuthController(
     ILogger<AuthController> logger,
     IClusterClient clusterClient,
-    IValidator<RegisterRequest> registerRequestValidator
+    IValidator<RegisterRequest> registerRequestValidator,
+    IValidator<LoginRequest> loginRequestValidator
 ) : ControllerBase
 {
     // ============ 接口定义 ============
@@ -20,8 +21,8 @@ public class AuthController(
     /// <param name="request">注册信息</param>
     /// <returns>注册结果</returns>
     [HttpPost("register")]
-    [ProducesResponseType(typeof(RegisterResponse), 200)]
-    [ProducesResponseType(400)]
+    [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var result = await registerRequestValidator.ValidateAsync(request);
@@ -39,12 +40,17 @@ public class AuthController(
     /// <param name="request">登录凭证</param>
     /// <returns>登录结果和令牌</returns>
     [HttpPost("login")]
-    [ProducesResponseType(typeof(LoginResponse), 200)]
-    [ProducesResponseType(401)]
-    public IActionResult Login([FromBody] LoginRequest request)
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        // 冥等实现：验证邮箱和密码、检查邮箱是否已验证、生成JWT令牌
-        return Ok(new LoginResponse());
+        var validate = await loginRequestValidator.ValidateAsync(request);
+        if (!validate.IsValid)
+            throw new ValidationException(validate.Errors);
+        var ag = clusterClient.GetGrain<IAccountGrain>(Guid.NewGuid());
+        if (!await ag.ExistEmailAsync(request.Email))
+            return BadRequest("Email is not registered");
+        return Ok(await ag.LoginAsync(request));
     }
 
     /// <summary>

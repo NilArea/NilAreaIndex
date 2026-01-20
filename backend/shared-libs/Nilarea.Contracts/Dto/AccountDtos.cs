@@ -18,6 +18,7 @@ public class RegisterRequest
 ///     用户注册响应
 /// </summary>
 [GenerateSerializer]
+[Alias("NilArea.Contracts.Dto.RegisterResponse")]
 public class RegisterResponse
 {
     [Id(0)] public long UserId { get; set; }
@@ -29,22 +30,26 @@ public class RegisterResponse
 /// <summary>
 ///     登录请求
 /// </summary>
+[GenerateSerializer]
+[Alias("NilArea.Contracts.Dto.LoginRequest")]
 public class LoginRequest
 {
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    [Id(0)] public string Email { get; set; } = string.Empty;
+    [Id(1)] public string Password { get; set; } = string.Empty;
 }
 
 /// <summary>
 ///     登录响应
 /// </summary>
+[GenerateSerializer]
+[Alias("NilArea.Contracts.Dto.LoginResponse")]
 public class LoginResponse
 {
-    public Guid UserId { get; set; }
-    public string Email { get; set; } = string.Empty;
-    public string Username { get; set; } = string.Empty;
-    public string Token { get; set; } = string.Empty;
-    public DateTime TokenExpiry { get; set; }
+    [Id(0)] public long UserId { get; set; }
+    [Id(1)] public string AccessToken { get; set; } = string.Empty;
+    [Id(2)] public DateTime AccessTokenExpiry { get; set; }
+    [Id(3)] public string RefreshToken { get; set; } = string.Empty;
+    [Id(4)] public DateTime RefreshTokenExpiry { get; set; }
 }
 
 /// <summary>

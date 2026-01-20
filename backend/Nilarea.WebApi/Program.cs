@@ -18,26 +18,26 @@ builder.UseOrleansClient(clientBuilder =>
 });
 
 builder.Services
+    .AddContractsValidators()
+    .AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
+
+builder.Services
     .AddProblemDetails()
     .AddExceptionHandler<OrleansExceptionHandler>()
     .AddExceptionHandler<ValidationExceptionHandler>()
     .AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services
-    .AddContractsValidators()
-    .AddValidatorsFromAssemblyContaining<Program>(includeInternalTypes: true);
+    .AddCors(Helpers.CorsSetup);
 
 builder.Services
     .AddControllers();
-builder.Services
-    .AddCors(Helpers.CorsSetup);
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
-app.UseRouting();
 app.UseCors();
 
 app.MapControllers();

@@ -45,10 +45,9 @@ public static class Configures
                 op.UseShardingTransaction((conStr, stb) => { stb.UseMySql(conStr, sqlVersion); });
                 op.AddDefaultDataSource(ds0, sqlMaster);
                 op.AddReadWriteSeparation(_ => new Dictionary<string, IEnumerable<string>>
-                    {
-                        { ds0, [sqlSlave] }
-                    }, ReadStrategyEnum.Loop, ReadWriteDefaultEnableBehavior.DefaultEnable,
-                    10);
+                {
+                    { ds0, [sqlSlave] }
+                }, ReadStrategyEnum.Loop, ReadWriteDefaultEnableBehavior.DefaultEnable);
             }
         }
 

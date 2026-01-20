@@ -294,3 +294,4 @@ FodyWeavers.xsd
 **/pnpm-lock.yaml
 
 **/DesignTimeDbContextFactory.cs
+**/wwwroot/

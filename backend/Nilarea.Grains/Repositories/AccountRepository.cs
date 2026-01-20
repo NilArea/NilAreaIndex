@@ -13,7 +13,8 @@ namespace NilArea.Grains.Repositories;
 public interface IAccountRepository
 {
     ValueTask<bool> ExistsAccountAsync(string email);
-    ValueTask<(long, DateTime)> InsertAccount(RegisterRequest accountInfo);
+    ValueTask<RegisterResponse> InsertAccountAsync(RegisterRequest accountInfo);
+    ValueTask<LoginResponse> VerifyLoginInfoAsync(LoginRequest loginInfo);
 }
 
 public class AccountRepository(
@@ -32,7 +33,7 @@ public class AccountRepository(
             au.Email == email && au.DeleteAt == null);
     }
 
-    public async ValueTask<(long, DateTime)> InsertAccount(RegisterRequest accountInfo)
+    public async ValueTask<RegisterResponse> InsertAccountAsync(RegisterRequest accountInfo)
     {
         if (await ExistsAccountAsync(accountInfo.Email))
             throw new AccountException("Email already registered", AccountAction.Register);
@@ -56,11 +57,36 @@ public class AccountRepository(
             throw new AccountException("Account already exists.", AccountAction.Register);
         }
 
-        return (uid, add.CreatedAt.Value);
+        return new RegisterResponse
+        {
+            UserId = uid,
+            Email = accountInfo.Email,
+            Username = accountInfo.Username,
+            CreatedAt = add.CreatedAt.Value
+        };
+    }
+
+    public async ValueTask<LoginResponse> VerifyLoginInfoAsync(LoginRequest loginInfo)
+    {
+        var account = await dbContext.AccountUsers
+            .FirstOrDefaultAsync(au => au.Email == loginInfo.Email && au.DeleteAt == null);
+        if (account is null)
+            throw new AccountException("Email does not registered", AccountAction.Login);
+        if (!passwordHasher.Verify(loginInfo.Password, account.PasswordSaltHash))
+            throw new AccountException("Password does not match", AccountAction.Login);
+        return await GenLoginResponseAsync(account.UserId);
     }
 
     private static RedisKey GenRedisKey()
     {
         throw new NotImplementedException();
+    }
+
+    private async ValueTask<LoginResponse> GenLoginResponseAsync(long userId)
+    {
+        return new LoginResponse
+        {
+            UserId = userId
+        };
     }
 }
