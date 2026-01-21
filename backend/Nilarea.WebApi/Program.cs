@@ -1,6 +1,7 @@
 using FluentValidation;
 using NilArea.Api.Utils.ExceptionHandler;
 using NilArea.Api.Utils.Helpers;
+using NilArea.Common.Utils;
 using NilArea.Contracts;
 using Orleans.Configuration;
 
@@ -8,11 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.UseOrleansClient(clientBuilder =>
 {
+    var configuration = clientBuilder.Configuration;
     clientBuilder
         .Configure<ClusterOptions>(options =>
         {
-            options.ClusterId = "nilarea-cluster";
-            options.ServiceId = "nilarea-service";
+            options.ClusterId = configuration.SafeGetConfigureValue("ClusterOptions:ClusterId");
+            options.ServiceId = configuration.SafeGetConfigureValue("ClusterOptions:ServiceId");
         })
         .UseLocalhostClustering();
 });
@@ -39,6 +41,9 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 app.UseCors();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.MapControllers();
 

@@ -8,26 +8,21 @@
   "scripts": {
     "dev": "npm run dev --workspace=frontend/webapp",
     "dev:webapp": "npm run dev --workspace=frontend/webapp",
-    "dev:admin": "npm run dev --workspace=frontend/admin-panel",
     "build": "npm run build --workspace=frontend/webapp",
     "build:all": "npm run build --workspaces",
     "preview": "npm run preview --workspace=frontend/webapp",
-    "preview:webapp": "npm run preview --workspace=frontend/webapp",
-    "preview:admin": "npm run preview --workspace=frontend/admin-panel"
+    "preview:webapp": "npm run preview --workspace=frontend/webapp"
   },
   "workspaces": [
     "frontend/webapp",
-    "frontend/admin-panel",
     "frontend/shared"
   ],
   "dependencies": {
-    "jquery": "^3.7.1",
     "vite-plugin-externals": "^0.6.2",
     "vue": "^3.5.26"
   },
   "devDependencies": {
     "@types/node": "^24.10.9",
-    "@types/jquery": "^3.5.33",
     "@vitejs/plugin-vue": "^6.0.3",
     "vite-plugin-vue-devtools": "^8.0.5",
     "@vue/tsconfig": "^0.8.1",

@@ -1,61 +1,77 @@
 <template>
-  <div id="home">
-    <div id="nav-bar">
-    <span id="nav-logo-container">
+  <div>
+    <div
+      id="nav-bar"
+      ref="navBarRef"
+      :class="{ sticky: isNavSticky }"
+    >
+      <span id="nav-logo-container">
         <span id="nav-logo-main"></span>
-    </span>
+      </span>
       <div id="nav-link-container">
-        <a class="nav-link" href="/">首页</a>
-        <a class="nav-link" href="/home">博客</a>
+        <router-link class="nav-link" to="/">首页</router-link>
+        <router-link class="nav-link" to="/blog">博客</router-link>
       </div>
     </div>
-    <div id="top-bg"></div>
-    <div id="graph-1" nav-trigger>
-    </div>
-    <FooterComponent />
+    <div
+      id="top-bg"
+      :class="{ loaded: isBgLoaded}"
+    ></div>
+    <div id="spacer"></div>
+    <section id="graph-1" nav-trigger>
+    </section>
+    <section id="graph-2">
+    </section>
+    <section id="graph-3">
+    </section>
   </div>
 </template>
 
-<script setup>
-import FooterComponent from '../components/FooterComponent.vue';
-import { navScroll } from '../assets/scroll.ts';
+<script lang="ts" setup>
+import { onMounted, onUnmounted, ref } from 'vue';
 
-$(function() {
-  $('#top-bg').addClass('loaded');
+const isNavSticky = ref(false);
+const isBgLoaded = ref(false);
+const scrolling = ref(false);
 
-  const $nav = $('#nav-bar');
-  const $target = $('[nav-trigger]');
-  let scrolling = false;
+const navBarRef = ref<HTMLElement | null>(null);
+const navTriggerRef = ref<HTMLElement | null>(null);
 
-  function checkSticky() {
-    if ($target[0] === undefined) {
-      return;
-    }
-    const targetRect = $target[0].getBoundingClientRect();
-    if (targetRect.top <= 0) {
-      $nav.addClass('sticky');
-    } else {
-      $nav.removeClass('sticky');
-    }
-    scrolling = false;
+const checkSticky = () => {
+  if (!navTriggerRef.value) return;
+
+  const targetRect = navTriggerRef.value.getBoundingClientRect();
+
+  isNavSticky.value = targetRect.top <= 0;
+
+  scrolling.value = false;
+};
+
+const handleScroll = () => {
+  if (!scrolling.value) {
+    scrolling.value = true;
+    requestAnimationFrame(checkSticky);
   }
+};
 
-  $(window).on('scroll', function() {
-    if (!scrolling) {
-      scrolling = true;
-      requestAnimationFrame(checkSticky);
-    }
-  });
+const init = () => {
+  setTimeout(() => {
+    isBgLoaded.value = true;
+  }, 100);
   checkSticky();
-  navScroll($('.nav-link[data-target]'));
+};
+
+onMounted(() => {
+  init();
+  window.addEventListener('scroll', handleScroll, { passive: true });
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
 });
 </script>
 
 <style scoped>
-#home {
-  height: 30%;
-}
-
 h1 {
   margin-bottom: 20px;
   font-weight: 400;
@@ -131,7 +147,7 @@ h5 {
 
 #nav-logo-main {
   width: 50px;
-  background-image: url(/nilarea.png);
+  background-image: url(/images/nilarea.png);
 }
 
 #nav-logo-text {
@@ -196,7 +212,6 @@ h5 {
   color: var(--txt-b-pure)
 }
 
-
 @media screen and (max-width: 1300px) {
   #nav-logo-container {
     left: 100px
@@ -235,7 +250,7 @@ h5 {
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
-  background-image: url(/fufu-bg.png);
+  background-image: url(/images/fufu-bg.png);
   transition: transform 1.5s, opacity 1s;
   transform: scale(1.05);
   opacity: 0
@@ -268,6 +283,10 @@ h5 {
   height: 3px;
   border-radius: 2px;
   background-color: var(--theme-color);
+}
+
+#spacer {
+  height: 30vh;
 }
 
 #graph-1, #graph-2, #graph-3 {

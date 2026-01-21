@@ -9,9 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@nilarea/shared": "1.0.0"
   },
   "devDependencies": {
-    "@nilarea/shared": "1.0.0"
+    "vue-router": "^4.6.4"
   }
 }

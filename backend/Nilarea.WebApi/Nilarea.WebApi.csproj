@@ -9,7 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="..\.dockerignore">
+        <Content Include="..\..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
         <None Update="appsettings.json">
@@ -27,7 +27,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Orleans.Client" Version="9.2.1"/>
-        <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.2"/>
     </ItemGroup>
 
 </Project>

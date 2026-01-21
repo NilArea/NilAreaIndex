@@ -6,6 +6,6 @@ internal static partial class Helpers
 {
     public static void CorsSetup(CorsOptions options)
     {
-        options.AddPolicy("_myAllowSpecificOrigins", policy => { });
+        options.AddPolicy("_myAllowSpecificOrigins", policy => { policy.WithOrigins("http://localhost:5173"); });
     }
 }

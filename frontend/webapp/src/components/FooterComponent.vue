@@ -2,7 +2,10 @@
   <footer>
     <div>
       <p>与我联系</p>
-      <a id="link-contact-me">我的邮箱</a><br>
+      <a
+        id="link-contact-me"
+        @click.prevent="contactClick"
+      >我的邮箱</a><br>
       <a href="https://space.bilibili.com/569316920/" target="_blank">我的 bilibili 频道</a><br>
       <a href="https://ifdian.net/a/QianXi_Lee" target="_blank">我的 爱发电</a><br>
     </div>
@@ -17,19 +20,14 @@
   </footer>
 </template>
 
-<script setup>
-$(function() {
-  $('#link-contact-me').on('click', function(e) {
-    e.preventDefault();
-    location.href = 'mailto:qianxilee232@163.com';
-  });
-});
+<script lang="ts" setup>
+function contactClick() {
+  window.location.href = 'mailto:qianxilee232@163.com';
+}
 </script>
 
 <style scoped>
 footer {
-  position: relative;
-  top: 100%;
   width: 100%;
   padding: 100px 0 95px;
   font-size: 0;
