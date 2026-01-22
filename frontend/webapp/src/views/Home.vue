@@ -54,7 +54,7 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from 'vue';
-import ScrollLink from '../components/ScrollLink.vue';
+import { ScrollLink } from '../components';
 
 const isNavSticky = ref(false);
 const isBgLoaded = ref(false);

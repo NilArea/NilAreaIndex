@@ -10,7 +10,6 @@
 <script lang="ts" setup>
 import { computed, type ComputedRef } from 'vue';
 
-// 缓动函数集合
 const easingFunctions = {
   linear: (t: number) => t,
   easeInQuad: (t: number) => t * t,
@@ -27,7 +26,7 @@ const easingFunctions = {
   easeInOutQuint: (t: number) => t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * (--t) * t * t * t * t
 };
 
-interface Props {
+export interface Props {
   // 目标可以是 DOM id 或绝对偏移量
   to: string | number;
   // 滚动时长（毫秒）
@@ -73,7 +72,6 @@ const getTargetPosition = (): number => {
   return window.pageYOffset + element.getBoundingClientRect().top - props.offset;
 };
 
-
 // 平滑滚动
 const smoothScroll = (targetPosition: number) => {
   const startPosition = window.pageYOffset;
@@ -114,10 +112,6 @@ const smoothScroll = (targetPosition: number) => {
 
 // 处理点击事件
 const handleClick = (event: MouseEvent) => {
-  if (props.preventDefault) {
-    event.preventDefault();
-  }
-
   emit('click', event);
 
   // 执行自定义点击回调

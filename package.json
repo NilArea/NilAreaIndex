@@ -14,8 +14,7 @@
     "preview:webapp": "npm run preview --workspace=frontend/webapp"
   },
   "workspaces": [
-    "frontend/webapp",
-    "frontend/shared"
+    "frontend/webapp"
   ],
   "dependencies": {
     "vite-plugin-externals": "^0.6.2",
@@ -23,11 +22,11 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.9",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.0",
     "@vitejs/plugin-vue": "^6.0.3",
     "vite-plugin-vue-devtools": "^8.0.5",
     "@vue/tsconfig": "^0.8.1",
-    "typescript": "~5.9.3",
-    "vite": "^7.3.0",
     "vue-tsc": "^3.1.4"
   }
 }

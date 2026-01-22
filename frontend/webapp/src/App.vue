@@ -14,7 +14,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import FooterComponent from './components/FooterComponent.vue';
+import { FooterComponent } from './components';
 
 const route = useRoute();
 
