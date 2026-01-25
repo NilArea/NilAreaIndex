@@ -4,8 +4,9 @@ using NilArea.Common.Utils;
 using NilArea.Contracts;
 using NilArea.Silo;
 using Orleans.Configuration;
+using Orleans.Dashboard;
 
-var builder = Host.CreateDefaultBuilder(args);
+var builder = Host.CreateApplicationBuilder(args);
 
 builder.UseOrleans(siloBuilder =>
 {
@@ -22,6 +23,7 @@ builder.UseOrleans(siloBuilder =>
             options.ServiceId = configuration.SafeGetConfigureValue("ClusterOptions:ServiceId");
         })
         .UseLocalhostClustering()
+        .AddDashboard()
         .ConfigureLogging(logging => logging.AddConsole());
 });
 

@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <RootNamespace>NilArea.Api</RootNamespace>
+        <RootNamespace>NilArea.Dashboard</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,14 +19,12 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\shared-libs\Nilarea.Contracts\Nilarea.Contracts.csproj"/>
-        <ProjectReference Include="..\shared-libs\Nilarea.Interfaces\Nilarea.Interfaces.csproj"/>
-    </ItemGroup>
-
     <ItemGroup>
         <PackageReference Include="Microsoft.Orleans.Client" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.Orleans.Dashboard" Version="10.0.0"/>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\shared-libs\Nilarea.Common\Nilarea.Common.csproj"/>
     </ItemGroup>
 
 </Project>
