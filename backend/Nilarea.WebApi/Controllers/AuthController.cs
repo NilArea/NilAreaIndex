@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using NilArea.Api.Utils;
 using NilArea.Contracts.Dto;
 using NilArea.Interfaces.IGrains;
 
@@ -9,6 +10,7 @@ namespace NilArea.Api.Controllers;
 public class AuthController(
     ILogger<AuthController> logger,
     IClusterClient clusterClient,
+    IRedisDatabaseFactory redisDatabaseFactory,
     IValidator<RegisterRequest> registerRequestValidator,
     IValidator<LoginRequest> loginRequestValidator
 ) : ControllerBase

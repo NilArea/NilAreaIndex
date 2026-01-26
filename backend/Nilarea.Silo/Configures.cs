@@ -20,7 +20,7 @@ public static class Configures
             return collection
                 .Configure<SnowflakeIdGeneratorOptions>(options =>
                 {
-                    options.MachineId = configuration.SafeGetConfigureValue<int>("CLUSTER_MACHINE_ID");
+                    options.MachineId = configuration.SafeGetConfigureValue("CLUSTER_MACHINE_ID", 0);
                 })
                 .AddSingleton<IIdGenerator<long>, SnowflakeIdGenerator>()
                 .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
@@ -31,8 +31,6 @@ public static class Configures
             collection.AddShardingDbContext<NilDbContext>()
                 .UseConfig(ConfigDbContext)
                 .AddShardingCore();
-            collection.AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(_ =>
-                ConnectionMultiplexer.Connect(configuration.SafeGetConfigureValue("REDIS_CLUSTER")));
             return collection;
 
             void ConfigDbContext(ShardingConfigOptions op)
@@ -50,6 +48,14 @@ public static class Configures
                     { ds0, [sqlSlave] }
                 }, ReadStrategyEnum.Loop, ReadWriteDefaultEnableBehavior.DefaultEnable);
             }
+        }
+
+        public IServiceCollection AddNilareaCache(IConfiguration configuration)
+        {
+            collection.AddSingleton<IConnectionMultiplexer>(_ =>
+                ConnectionMultiplexer.Connect(configuration.SafeGetConfigureValue("REDIS_CLUSTER")));
+            collection.AddSingleton<IRedisDatabaseFactory, RedisDatabaseFactory>();
+            return collection;
         }
 
         public IServiceCollection AddNilareaRepositories(IConfiguration configuration)

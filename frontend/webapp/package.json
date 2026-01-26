@@ -10,8 +10,11 @@
     "build:types": "vue-tsc --declaration --emitDeclarationOnly --outDir dist/types"
   },
   "dependencies": {
+    "@nuxt/ui": "^4.4.0"
   },
   "devDependencies": {
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "vuex": "^4.1.0",
+    "valibot": "^1.2.0"
   }
 }

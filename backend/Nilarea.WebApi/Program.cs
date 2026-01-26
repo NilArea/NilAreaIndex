@@ -1,16 +1,18 @@
 using FluentValidation;
+using NilArea.Api.Utils;
 using NilArea.Api.Utils.ExceptionHandler;
 using NilArea.Api.Utils.Helpers;
 using NilArea.Common.Utils;
 using NilArea.Contracts;
 using Orleans.Configuration;
 using Orleans.Dashboard;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
 
 builder.UseOrleansClient(clientBuilder =>
 {
-    var configuration = clientBuilder.Configuration;
     clientBuilder
         .AddDashboard();
 #if DEBUG
@@ -23,6 +25,11 @@ builder.UseOrleansClient(clientBuilder =>
         .UseLocalhostClustering();
 #endif
 });
+
+builder.Services
+    .AddSingleton<IConnectionMultiplexer>(_ =>
+        ConnectionMultiplexer.Connect(configuration.SafeGetConnectionString("REDIS_CLUSTER")))
+    .AddSingleton<IRedisDatabaseFactory, RedisDatabaseFactory>();
 
 builder.Services
     .AddContractsValidators()

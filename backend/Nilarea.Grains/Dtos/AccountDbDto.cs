@@ -6,13 +6,13 @@ namespace NilArea.Grains.Dtos;
 
 public class AccountDbDto
 {
-    public long UserId { get; set; }
-    [MaxLength(100)] public string Email { get; set; } = string.Empty;
-    [MaxLength(255)] public string PasswordSaltHash { get; set; } = string.Empty;
-    [MaxLength(100)] public string UserName { get; set; } = string.Empty;
-    public DateTime? CreatedAt { get; set; }
-    public DateTime? DeleteAt { get; set; }
-    public DateTime? UpdateAt { get; set; }
+    public required long UserId { get; init; }
+    [MaxLength(100)] public required string Email { get; set; } = string.Empty;
+    [MaxLength(255)] public required string PasswordSaltHash { get; set; } = string.Empty;
+    [MaxLength(100)] public required string UserName { get; set; } = string.Empty;
+    public required DateTime? CreatedAt { get; init; }
+    public DateTime? DeleteAt { get; init; }
+    public DateTime? UpdateAt { get; init; }
 }
 
 // 2. 统一配置

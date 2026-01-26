@@ -11,6 +11,8 @@
       <div id="nav-link-container">
         <router-link class="nav-link" to="/">首页</router-link>
         <router-link class="nav-link" to="/blog">博客</router-link>
+        <account-icon-component v-if="false" />
+        <router-link v-else class="nav-link" to="/sign">登录</router-link>
       </div>
     </div>
     <div
@@ -19,16 +21,20 @@
     ></div>
     <div id="spacer"></div>
     <section id="graph-1" nav-trigger>
+      <blog-item-component />
     </section>
     <section id="graph-2">
+      <blog-item-component />
     </section>
     <section id="graph-3">
+      <blog-item-component />
     </section>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from 'vue';
+import { AccountIconComponent, BlogItemComponent } from '../components';
 
 const isNavSticky = ref(false);
 const isBgLoaded = ref(false);
@@ -304,9 +310,8 @@ h5 {
   background-color: var(--bg-w-pure)
 }
 
-#graph-1 {
-  padding-left: 5%;
-  padding-right: 5%
+#graph-1, #graph-3 {
+  background-color: var(--bg-w-245)
 }
 
 .tags-container {

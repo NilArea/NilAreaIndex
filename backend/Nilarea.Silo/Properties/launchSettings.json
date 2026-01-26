@@ -8,7 +8,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "MYSQL_MASTER": "Server=127.0.0.1;Port=3501;Database=NilArea;Uid=nilorleans;Pwd=nilorleans;AllowUserVariables=true",
         "MYSQL_SLAVE": "Server=127.0.0.1;Port=3502;Database=NilArea;Uid=nilorleans;Pwd=nilorleans;AllowUserVariables=true",
-        "REDIS_CLUSTER": "127.0.0.1:7001,password=123456",
+        "REDIS_CLUSTER": "127.0.0.1:7001,password=123456,allowAdmin=true",
         "CLUSTER_ID": "nilarea-cluster",
         "SERVICE_ID": "nilarea-service",
         "CLUSTER_MACHINE_ID": "2"

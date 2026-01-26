@@ -25,8 +25,11 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.2"/>
-        <PackageReference Include="ShardingCore" Version="7.9.1.24"/>
         <PackageReference Include="MySql.EntityFrameworkCore" Version="10.0.1"/>
+        <PackageReference Include="ShardingCore" Version="7.9.1.24"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="StackExchange.Redis" Version="2.10.1"/>
     </ItemGroup>
 </Project>

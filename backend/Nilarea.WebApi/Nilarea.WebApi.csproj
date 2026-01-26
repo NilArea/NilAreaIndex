@@ -28,6 +28,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Orleans.Client" Version="10.0.0"/>
         <PackageReference Include="Microsoft.Orleans.Dashboard" Version="10.0.0"/>
+        <PackageReference Include="StackExchange.Redis.Extensions.Core" Version="11.0.0"/>
     </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
 <template>
-  <div class="login">
+  <div class="blog-container">
 
   </div>
 </template>
@@ -9,5 +9,7 @@
 </script>
 
 <style scoped>
+.blog-container {
 
+}
 </style>

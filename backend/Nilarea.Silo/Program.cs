@@ -16,6 +16,7 @@ builder.UseOrleans(siloBuilder =>
         .ConfigureServices(services => services
             .AddContractsValidators()
             .AddNilareaTools(configuration)
+            .AddNilareaCache(configuration)
             .AddNilareaDbContext(configuration)
             .AddNilareaRepositories(configuration))
         .AddDashboard()

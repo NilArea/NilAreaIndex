@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
 :root {
   --theme-color: #70C000;
   --theme-color-active: rgba(112, 192, 0, .6);

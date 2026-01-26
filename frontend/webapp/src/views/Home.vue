@@ -19,7 +19,7 @@
     <div
       id="top-bg"
       :class="{ loaded: isBgLoaded}"
-    ></div>
+    />
     <div id="headline-container">
       <h1>ツ箫声断丶何处莫凭栏</h1>
       <span class="heading-underline"></span>
@@ -38,11 +38,20 @@
       <span class="heading-underline-1"></span>
       <div class="tags-container">
         <span>00 后</span>
+        <span>ZZU</span>
         <span>独立开发者</span>
         <span>二次元</span>
       </div>
       <div class="about-content">
-        <p>热爱自由</p>
+        <p>我是浅析</p>
+        <p>风象天秤，热爱自由</p>
+        <p>独立游戏开发者、非著名游戏爱好者</p>
+        <p><a class="link" href="https://www.nilarea.cn" target="_blank">零域 NilArea</a> 创始人</p>
+        <p>沉迷折腾与游戏有关的一切：</p>
+        <p>逻辑缜密的浪漫主义者</p>
+        <p><a class="link" href="https://dotnet.microsoft.com/" target="_blank">.NET</a> 生态忠实用户</p>
+        <p>偏爱 C# 与 Unity 的默契</p>
+        <p>也向往 Godot 的自由与轻灵</p>
       </div>
     </section>
     <section id="graph-2">
@@ -329,6 +338,10 @@ h5 {
 
 #graph-1, #graph-3 {
   background-color: var(--bg-w-pure)
+}
+
+#graph-2 {
+  background-color: var(--bg-w-245);
 }
 
 .tags-container {

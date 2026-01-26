@@ -9,7 +9,7 @@ using Orleans.Concurrency;
 namespace NilArea.Grains.ImplGrains;
 
 [StatelessWorker]
-public class AccountGrain(
+public sealed class AccountGrain(
     ILogger<AccountGrain> logger,
     IAccountRepository accountRepository,
     IValidator<RegisterRequest> registerRequestValidator,

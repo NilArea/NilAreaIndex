@@ -18,8 +18,6 @@ import { FooterComponent } from './components';
 
 const route = useRoute();
 
-// 根据路由决定是否显示导航和页脚
-//const showNavigation = computed(() => !route.meta.hideNavigation)
 const showFooter = computed(() => !route.meta.hideFooter);
 //const isAuthenticated = computed(() => localStorage.getItem('token') !== null)
 </script>

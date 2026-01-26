@@ -17,15 +17,15 @@ public interface IAccountRepository
     ValueTask<LoginResponse> VerifyLoginInfoAsync(LoginRequest loginInfo);
 }
 
-public class AccountRepository(
+public sealed class AccountRepository(
     ILogger<AccountRepository> logger,
     NilDbContext dbContext,
     IIdGenerator<long> idGenerator,
     IPasswordHasher passwordHasher,
-    IConnectionMultiplexer connectionMultiplexer
+    IRedisDatabaseFactory redisDatabaseFactory
 ) : IAccountRepository
 {
-    private IDatabase Redis { get; } = connectionMultiplexer.GetDatabase();
+    private IDatabase Redis { get; } = redisDatabaseFactory.GetDatabase();
 
     public async ValueTask<bool> ExistsAccountAsync(string email)
     {
