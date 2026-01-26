@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MySqlConnector;
+using MySql.Data.MySqlClient;
 using NilArea.Common.Utils;
 using NilArea.Contracts.Dto;
 using NilArea.Grains.DbContext;

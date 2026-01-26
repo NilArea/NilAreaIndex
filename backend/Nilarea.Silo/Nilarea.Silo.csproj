@@ -13,20 +13,17 @@
         <Content Include="..\..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
-        <None Update="appsettings.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="appsettings.Development.json">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Orleans.Server" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.Orleans.Persistence.Redis" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.Orleans.Reminders.Redis" Version="10.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Orleans.Dashboard" Version="10.0.0"/>
-        <PackageReference Include="Microsoft.Orleans.Server" Version="10.0.0"/>
-        <PackageReference Include="Orleans.Clustering.Kubernetes" Version="8.2.1"/>
-        <PackageReference Include="Microsoft.Orleans.Persistence.Redis" Version="10.0.0"/>
-        <PackageReference Include="Microsoft.Orleans.Reminders.Redis" Version="10.0.0"/>
     </ItemGroup>
 
     <ItemGroup>

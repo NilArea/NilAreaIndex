@@ -18,8 +18,10 @@ public static class Configures
         public IServiceCollection AddNilareaTools(IConfiguration configuration)
         {
             return collection
-                .Configure<SnowflakeIdGeneratorOptions>(_ =>
-                    configuration.GetSection(nameof(SnowflakeIdGeneratorOptions)))
+                .Configure<SnowflakeIdGeneratorOptions>(options =>
+                {
+                    options.MachineId = configuration.SafeGetConfigureValue<int>("CLUSTER_MACHINE_ID");
+                })
                 .AddSingleton<IIdGenerator<long>, SnowflakeIdGenerator>()
                 .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         }
@@ -30,19 +32,18 @@ public static class Configures
                 .UseConfig(ConfigDbContext)
                 .AddShardingCore();
             collection.AddSingleton<IConnectionMultiplexer, ConnectionMultiplexer>(_ =>
-                ConnectionMultiplexer.Connect(configuration.SafeGetConnectionString("REDIS_CLUSTER")));
+                ConnectionMultiplexer.Connect(configuration.SafeGetConfigureValue("REDIS_CLUSTER")));
             return collection;
 
             void ConfigDbContext(ShardingConfigOptions op)
             {
-                var sqlMaster = configuration.SafeGetConnectionString("MYSQL_MASTER");
-                var sqlSlave = configuration.SafeGetConnectionString("MYSQL_SLAVE");
+                var sqlMaster = configuration.SafeGetConfigureValue("MYSQL_MASTER");
+                var sqlSlave = configuration.SafeGetConfigureValue("MYSQL_SLAVE");
                 const string ds0 = "ds0";
-                var sqlVersion = new MySqlServerVersion(new Version(9, 5));
                 //如何通过字符串查询创建DbContext
-                op.UseShardingQuery((conStr, sqb) => { sqb.UseMySql(conStr, sqlVersion); });
+                op.UseShardingQuery((conStr, sqb) => { sqb.UseMySQL(conStr); });
                 //如何通过事务创建DbContext
-                op.UseShardingTransaction((conStr, stb) => { stb.UseMySql(conStr, sqlVersion); });
+                op.UseShardingTransaction((conStr, stb) => { stb.UseMySQL(conStr); });
                 op.AddDefaultDataSource(ds0, sqlMaster);
                 op.AddReadWriteSeparation(_ => new Dictionary<string, IEnumerable<string>>
                 {

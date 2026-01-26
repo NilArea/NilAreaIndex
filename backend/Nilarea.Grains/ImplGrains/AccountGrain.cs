@@ -4,9 +4,11 @@ using NilArea.Contracts.Dto;
 using NilArea.Grains.Repositories;
 using NilArea.Interfaces.Exceptions;
 using NilArea.Interfaces.IGrains;
+using Orleans.Concurrency;
 
 namespace NilArea.Grains.ImplGrains;
 
+[StatelessWorker]
 public class AccountGrain(
     ILogger<AccountGrain> logger,
     IAccountRepository accountRepository,

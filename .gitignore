@@ -293,5 +293,9 @@ FodyWeavers.xsd
 **/package-lock.json
 **/pnpm-lock.yaml
 
-**/DesignTimeDbContextFactory.cs
+**/Migrations
 **/wwwroot
+
+# Auto-generated type declarations
+auto-imports.d.ts
+components.d.ts

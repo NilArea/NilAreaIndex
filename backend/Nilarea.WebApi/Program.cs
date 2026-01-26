@@ -4,6 +4,7 @@ using NilArea.Api.Utils.Helpers;
 using NilArea.Common.Utils;
 using NilArea.Contracts;
 using Orleans.Configuration;
+using Orleans.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,12 +12,16 @@ builder.UseOrleansClient(clientBuilder =>
 {
     var configuration = clientBuilder.Configuration;
     clientBuilder
+        .AddDashboard();
+#if DEBUG
+    clientBuilder
         .Configure<ClusterOptions>(options =>
         {
             options.ClusterId = configuration.SafeGetConfigureValue("ClusterOptions:ClusterId");
             options.ServiceId = configuration.SafeGetConfigureValue("ClusterOptions:ServiceId");
         })
         .UseLocalhostClustering();
+#endif
 });
 
 builder.Services
@@ -33,7 +38,13 @@ builder.Services
     .AddCors(Helpers.CorsSetup);
 
 builder.Services
+    .AddAuthentication();
+
+builder.Services
     .AddControllers();
+
+builder.Services
+    .AddAuthorization();
 
 var app = builder.Build();
 
@@ -41,6 +52,11 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapOrleansDashboard("/admin/dashboard");
+//    .RequireAuthorization();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
