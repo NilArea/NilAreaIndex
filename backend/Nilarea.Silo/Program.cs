@@ -18,7 +18,7 @@ builder.UseOrleans(siloBuilder =>
             .AddNilareaTools(configuration)
             .AddNilareaCache(configuration)
             .AddNilareaDbContext(configuration)
-            .AddNilareaRepositories(configuration))
+            .AddNilareaServices(configuration))
         .AddDashboard()
         .ConfigureLogging(logging => logging.AddConsole());
 #if DEBUG

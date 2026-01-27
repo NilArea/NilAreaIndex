@@ -1,13 +1,14 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 using NilArea.Contracts.Dto;
-using NilArea.Grains.Repositories;
+using NilArea.Grains.Services;
 using NilArea.Interfaces.Exceptions;
 using NilArea.Interfaces.IGrains;
 using Orleans.Concurrency;
 
 namespace NilArea.Grains.ImplGrains;
 
+[Reentrant]
 [StatelessWorker]
 public sealed class AccountGrain(
     ILogger<AccountGrain> logger,
@@ -16,9 +17,22 @@ public sealed class AccountGrain(
     IValidator<LoginRequest> loginRequestValidator
 ) : Grain, IAccountGrain
 {
+    private static readonly InlineValidator<string> EmailValidator;
+
+    static AccountGrain()
+    {
+        var validator = new InlineValidator<string>();
+        validator.RuleFor(x => x)
+            .NotEmpty()
+            .EmailAddress();
+        EmailValidator = validator;
+    }
+
     public async ValueTask<bool> ExistEmailAsync(string email)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+        var validate = await EmailValidator.ValidateAsync(email);
+        if (!validate.IsValid)
+            throw new AccountException(validate.ToString());
         return await accountRepository.ExistsAccountAsync(email);
     }
 

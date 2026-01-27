@@ -2,8 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NilArea.Common.Utils;
+using NilArea.Grains;
 using NilArea.Grains.DbContext;
-using NilArea.Grains.Repositories;
+using NilArea.Grains.Services;
 using ShardingCore;
 using ShardingCore.Core.ShardingConfigurations;
 using ShardingCore.Sharding.ReadWriteConfigurations;
@@ -58,10 +59,11 @@ public static class Configures
             return collection;
         }
 
-        public IServiceCollection AddNilareaRepositories(IConfiguration configuration)
+        public IServiceCollection AddNilareaServices(IConfiguration configuration)
         {
             return collection
-                .AddSingleton<IAccountRepository, AccountRepository>();
+                .AddSingleton<IAccountRepository, AccountRepository>()
+                .AddHostedService<ServiceInitializer>();
         }
     }
 }

@@ -2,16 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using NilArea.Common.Utils;
+using NilArea.Contracts;
 using NilArea.Contracts.Dto;
 using NilArea.Grains.DbContext;
 using NilArea.Grains.Dtos;
 using NilArea.Interfaces.Exceptions;
 using StackExchange.Redis;
 
-namespace NilArea.Grains.Repositories;
+namespace NilArea.Grains.Services;
 
 public interface IAccountRepository
 {
+    internal ValueTask InitializeAsync();
     ValueTask<bool> ExistsAccountAsync(string email);
     ValueTask<RegisterResponse> InsertAccountAsync(RegisterRequest accountInfo);
     ValueTask<LoginResponse> VerifyLoginInfoAsync(LoginRequest loginInfo);
@@ -22,13 +24,16 @@ public sealed class AccountRepository(
     NilDbContext dbContext,
     IIdGenerator<long> idGenerator,
     IPasswordHasher passwordHasher,
-    IRedisDatabaseFactory redisDatabaseFactory
-) : IAccountRepository
+    IRedisDatabaseFactory redisDatabaseFactory)
+    : IAccountRepository
 {
+    private static RedisKey BfAcount => StaticValues.BfAcount;
+
     private IDatabase Redis { get; } = redisDatabaseFactory.GetDatabase();
 
     public async ValueTask<bool> ExistsAccountAsync(string email)
     {
+        if (!await Redis.BloomExistsAsync(BfAcount, email)) return false;
         return await dbContext.AccountUsers.AnyAsync(au =>
             au.Email == email && au.DeleteAt == null);
     }
@@ -50,10 +55,10 @@ public sealed class AccountRepository(
         try
         {
             await dbContext.SaveChangesAsync();
+            await Redis.BloomAddAsync(BfAcount, add.Email);
         }
         catch (DbUpdateException ex)when (ex.InnerException is MySqlException { Number: 1062 })
         {
-            logger.LogError(ex, "");
             throw new AccountException("Account already exists.", AccountAction.Register);
         }
 
@@ -75,6 +80,19 @@ public sealed class AccountRepository(
         if (!passwordHasher.Verify(loginInfo.Password, account.PasswordSaltHash))
             throw new AccountException("Password does not match", AccountAction.Login);
         return await GenLoginResponseAsync(account.UserId);
+    }
+
+
+    public async ValueTask InitializeAsync()
+    {
+        try
+        {
+            await Redis.BloomReserveAsync(BfAcount, 0.01d, 16384);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Try Create a new BF, but it was existed");
+        }
     }
 
     private static RedisKey GenRedisKey()

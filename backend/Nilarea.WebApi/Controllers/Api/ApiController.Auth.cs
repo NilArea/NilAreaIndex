@@ -1,28 +1,23 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using NilArea.Api.Utils;
+using NilArea.Contracts;
 using NilArea.Contracts.Dto;
 using NilArea.Interfaces.IGrains;
+using StackExchange.Redis;
 
+// ReSharper disable once CheckNamespace
 namespace NilArea.Api.Controllers;
 
-[Route("api/[controller]")]
-public class AuthController(
-    ILogger<AuthController> logger,
-    IClusterClient clusterClient,
-    IRedisDatabaseFactory redisDatabaseFactory,
-    IValidator<RegisterRequest> registerRequestValidator,
-    IValidator<LoginRequest> loginRequestValidator
-) : ControllerBase
+public partial class ApiController
 {
-    // ============ 接口定义 ============
+    private static RedisKey BfAcount => StaticValues.BfAcount;
 
     /// <summary>
     ///     用户注册（使用邮箱）
     /// </summary>
     /// <param name="request">注册信息</param>
     /// <returns>注册结果</returns>
-    [HttpPost("register")]
+    [HttpPost("auth/register")]
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -30,7 +25,7 @@ public class AuthController(
         var result = await registerRequestValidator.ValidateAsync(request);
         if (!result.IsValid)
             throw new ValidationException(result.Errors);
-        var ag = clusterClient.GetGrain<IAccountGrain>(Guid.NewGuid());
+        var ag = clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
         if (await ag.ExistEmailAsync(request.Email))
             return BadRequest("Email already registered");
         return Ok(await ag.RegisterUserAsync(request));
@@ -41,7 +36,7 @@ public class AuthController(
     /// </summary>
     /// <param name="request">登录凭证</param>
     /// <returns>登录结果和令牌</returns>
-    [HttpPost("login")]
+    [HttpPost("auth/login")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -49,7 +44,9 @@ public class AuthController(
         var validate = await loginRequestValidator.ValidateAsync(request);
         if (!validate.IsValid)
             throw new ValidationException(validate.Errors);
-        var ag = clusterClient.GetGrain<IAccountGrain>(Guid.NewGuid());
+        if (!await ReadonlyRedis.BloomExistsAsync(BfAcount, request.Email))
+            return BadRequest("Email is not registered");
+        var ag = clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
         if (!await ag.ExistEmailAsync(request.Email))
             return BadRequest("Email is not registered");
         return Ok(await ag.LoginAsync(request));
@@ -60,7 +57,7 @@ public class AuthController(
     /// </summary>
     /// <param name="request">验证令牌</param>
     /// <returns>验证结果</returns>
-    [HttpPost("verify-email")]
+    [HttpPost("auth/verify-email")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     public IActionResult VerifyEmail([FromBody] VerifyEmailRequest request)
@@ -74,7 +71,7 @@ public class AuthController(
     /// </summary>
     /// <param name="request">邮箱地址</param>
     /// <returns>操作结果</returns>
-    [HttpPost("resend-verification")]
+    [HttpPost("auth/resend-verification")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     public IActionResult ResendVerification([FromBody] ResendVerificationRequest request)
@@ -88,7 +85,7 @@ public class AuthController(
     /// </summary>
     /// <param name="request">新用户名</param>
     /// <returns>更新结果</returns>
-    [HttpPut("username")]
+    [HttpPut("auth/username")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]
@@ -103,7 +100,7 @@ public class AuthController(
     ///     获取当前用户信息（需要认证）
     /// </summary>
     /// <returns>用户信息</returns>
-    [HttpGet("me")]
+    [HttpGet("auth/me")]
     [ProducesResponseType(typeof(RegisterResponse), 200)]
     [ProducesResponseType(401)]
     public IActionResult GetCurrentUser()
