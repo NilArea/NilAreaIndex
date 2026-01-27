@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using NilArea.Api.Utils;
 using NilArea.Contracts;
 using NilArea.Contracts.Dto;
 using NilArea.Interfaces.IGrains;
@@ -8,8 +9,16 @@ using StackExchange.Redis;
 // ReSharper disable once CheckNamespace
 namespace NilArea.Api.Controllers;
 
-public partial class ApiController
+[Route("/api/auth")]
+public class ApiAuthController(
+    ILogger<ApiAuthController> logger,
+    IClusterClient clusterClient,
+    IRedisDatabaseFactory redisDatabaseFactory,
+    IValidator<RegisterRequest> registerRequestValidator,
+    IValidator<LoginRequest> loginRequestValidator
+) : ControllerBase
 {
+    private IDatabase ReadonlyRedis { get; } = redisDatabaseFactory.GetDatabase();
     private static RedisKey BfAcount => StaticValues.BfAcount;
 
     /// <summary>
@@ -17,7 +26,7 @@ public partial class ApiController
     /// </summary>
     /// <param name="request">注册信息</param>
     /// <returns>注册结果</returns>
-    [HttpPost("auth/register")]
+    [HttpPost("register")]
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -36,7 +45,7 @@ public partial class ApiController
     /// </summary>
     /// <param name="request">登录凭证</param>
     /// <returns>登录结果和令牌</returns>
-    [HttpPost("auth/login")]
+    [HttpPost("login")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -57,7 +66,7 @@ public partial class ApiController
     /// </summary>
     /// <param name="request">验证令牌</param>
     /// <returns>验证结果</returns>
-    [HttpPost("auth/verify-email")]
+    [HttpPost("verify-email")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     public IActionResult VerifyEmail([FromBody] VerifyEmailRequest request)
@@ -71,7 +80,7 @@ public partial class ApiController
     /// </summary>
     /// <param name="request">邮箱地址</param>
     /// <returns>操作结果</returns>
-    [HttpPost("auth/resend-verification")]
+    [HttpPost("resend-verification")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     public IActionResult ResendVerification([FromBody] ResendVerificationRequest request)
@@ -85,7 +94,7 @@ public partial class ApiController
     /// </summary>
     /// <param name="request">新用户名</param>
     /// <returns>更新结果</returns>
-    [HttpPut("auth/username")]
+    [HttpPut("username")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(401)]
@@ -100,7 +109,7 @@ public partial class ApiController
     ///     获取当前用户信息（需要认证）
     /// </summary>
     /// <returns>用户信息</returns>
-    [HttpGet("auth/me")]
+    [HttpGet("me")]
     [ProducesResponseType(typeof(RegisterResponse), 200)]
     [ProducesResponseType(401)]
     public IActionResult GetCurrentUser()

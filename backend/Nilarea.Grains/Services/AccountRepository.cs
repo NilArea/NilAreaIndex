@@ -43,7 +43,7 @@ public sealed class AccountRepository(
         if (await ExistsAccountAsync(accountInfo.Email))
             throw new AccountException("Email already registered", AccountAction.Register);
         var uid = idGenerator.NextId();
-        var add = new AccountDbDto
+        var add = new AccountUserDto
         {
             UserId = uid,
             Email = accountInfo.Email,
@@ -51,7 +51,16 @@ public sealed class AccountRepository(
             PasswordSaltHash = passwordHasher.SaltedHash(accountInfo.Password),
             CreatedAt = DateTime.UtcNow
         };
+        var gid = await dbContext.AccountGroups
+            .Where(g => g.GroupName == StaticValues.AccountSystemGroupNames.User)
+            .Select(g => g.GroupId).FirstAsync();
+        var ug = new AccountUserGroup
+        {
+            UserId = uid,
+            GroupId = gid
+        };
         await dbContext.AccountUsers.AddAsync(add);
+        await dbContext.AccountUserGroups.AddAsync(ug);
         try
         {
             await dbContext.SaveChangesAsync();
@@ -67,7 +76,7 @@ public sealed class AccountRepository(
             UserId = uid,
             Email = accountInfo.Email,
             Username = accountInfo.Username,
-            CreatedAt = add.CreatedAt.Value
+            CreatedAt = add.CreatedAt
         };
     }
 

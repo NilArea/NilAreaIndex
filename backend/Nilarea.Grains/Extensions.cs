@@ -9,7 +9,16 @@ public static class Extensions
     {
         public ModelBuilder ApplyNilareaContractsConfig()
         {
-            return modelBuilder.ApplyConfiguration(new AccountUserEntityConfig());
+            var ec = new AccountUserEntityConfig();
+            modelBuilder
+                .ApplyConfiguration<AccountUserDto>(ec)
+                .ApplyConfiguration<AccountGroupDto>(ec)
+                .ApplyConfiguration<AccountUserGroup>(ec);
+            modelBuilder.Entity<AccountUserDto>()
+                .HasQueryFilter(static u => u.DeleteAt == null);
+            modelBuilder.Entity<AccountGroupDto>()
+                .HasQueryFilter(static g => g.DeleteAt == null);
+            return modelBuilder;
         }
     }
 }
