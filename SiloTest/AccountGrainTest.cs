@@ -37,7 +37,7 @@ public class AccountGrainTest : IAsyncLifetime
     {
         const int count = 100000;
         var ag = _clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
-        foreach (var i in Enumerable.Range(0, count)) await ag.ExistEmailAsync($"test{i}@silo.test");
+        foreach (var i in Enumerable.Range(0, count)) await ag.ExistAccountAsync($"test{i}@silo.test");
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class AccountGrainTest : IAsyncLifetime
         var ag = _clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
         await Task.WhenAll(Enumerable.Range(0, count).Select(async i =>
         {
-            await ag.ExistEmailAsync($"test{i}@silo.test");
+            await ag.ExistAccountAsync($"test{i}@silo.test");
         }).ToArray());
     }
 }

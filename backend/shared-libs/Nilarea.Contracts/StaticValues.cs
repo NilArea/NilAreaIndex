@@ -4,7 +4,12 @@ namespace NilArea.Contracts;
 
 public static class StaticValues
 {
-    public static readonly RedisKey BfAcount = "BF:Account";
+    public static readonly RedisKey BfAccount = "BF:Account";
+
+    /// <summary>
+    ///     NilArea:ConfirmKey
+    /// </summary>
+    public static readonly RedisKey ConfirmKeyPrefix = "NA:CK";
 
     public static class AccountSystemGroupNames
     {

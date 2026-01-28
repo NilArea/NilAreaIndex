@@ -3,29 +3,32 @@ using NilArea.Contracts.Dto;
 
 namespace NilArea.Contracts.Validators;
 
-internal class RegisterRequestValidator : AbstractValidator<RegisterRequest>
+public static class AccountValidators
 {
-    public RegisterRequestValidator()
+    internal class RegisterRequestValidator : AbstractValidator<Requests.RegisterAccount>
     {
-        RuleFor(r => r.Username)
-            .NotEmpty().WithMessage("Username is required.")
-            .MinimumLength(4).WithMessage("Username must be at least 4 characters long.");
-        RuleFor(r => r.Password)
-            .NotEmpty().WithMessage("Password is required.");
-        RuleFor(r => r.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("Invalid email address.");
+        public RegisterRequestValidator()
+        {
+            RuleFor(r => r.Username)
+                .NotEmpty().WithMessage("Username is required.")
+                .MinimumLength(4).WithMessage("Username must be at least 4 characters long.");
+            RuleFor(r => r.Password)
+                .NotEmpty().WithMessage("Password is required.");
+            RuleFor(r => r.Email)
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Invalid email address.");
+        }
     }
-}
 
-internal class LoginRequestValidator : AbstractValidator<LoginRequest>
-{
-    public LoginRequestValidator()
+    internal class LoginRequestValidator : AbstractValidator<Requests.LoginAccount>
     {
-        RuleFor(r => r.Password)
-            .NotEmpty().WithMessage("Password is required.");
-        RuleFor(r => r.Email)
-            .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("Invalid email address.");
+        public LoginRequestValidator()
+        {
+            RuleFor(r => r.Password)
+                .NotEmpty().WithMessage("Password is required.");
+            RuleFor(r => r.Email)
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Invalid email address.");
+        }
     }
 }

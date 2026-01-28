@@ -49,11 +49,6 @@ public class AccountUserDto
     public DateTime? UpdateAt { get; set; }
 
     /// <summary>
-    ///     用户是否邮箱验证,未完成与游客相同,完成才为用户
-    /// </summary>
-    public bool EmailConfirmed { get; set; }
-
-    /// <summary>
     ///     用户最近登录时间
     /// </summary>
     [DataType("datetime(6)")]
@@ -85,6 +80,8 @@ public class AccountGroupDto
 
     [MaxLength(500)]
     public string? Description { get; set; }
+
+    public bool IsSystemGroup { get; init; }
 
     /// <summary>
     ///     组创建时间,系统组为0
@@ -142,6 +139,9 @@ public class AccountUserEntityConfig :
         builder.Property(e => e.Description)
             .HasMaxLength(500);
 
+        builder.Property(e => e.IsSystemGroup)
+            .HasDefaultValue(false);
+
         builder.Property(e => e.CreatedAt)
             .HasColumnType("datetime(6)")
             .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
@@ -155,13 +155,18 @@ public class AccountUserEntityConfig :
         builder.Property(e => e.DeleteAt)
             .HasColumnType("datetime(6)");
         /* ---------- 索引 ---------- */
-        builder.HasIndex(e => new { e.GroupName, e.DeleteAt })
+        builder.HasIndex(e => new { e.GroupId, e.GroupName, e.DeleteAt })
             .HasDatabaseName("IX_AccountGroup_DeleteAt")
             .IsUnique()
             .HasFilter($"{nameof(AccountGroupDto.DeleteAt)} IS NULL");
 
+        builder.HasIndex(e => new { e.GroupId, e.GroupName, e.IsSystemGroup })
+            .HasDatabaseName("IX_AccountGroup_SystemGroup")
+            .IsUnique()
+            .HasFilter($"{nameof(AccountGroupDto.IsSystemGroup)} = TRUE");
+
         builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("IX_AccountUser_CreatedAt");
+            .HasDatabaseName("IX_AccountGroup_CreatedAt");
         /* --------- 导航属性 --------- */
         builder.HasMany(g => g.UserGroups)
             .WithOne(ug => ug.Group)
@@ -200,14 +205,17 @@ public class AccountUserEntityConfig :
             .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
             .ValueGeneratedOnAdd();
 
+        builder.Property(e => e.DeleteAt)
+            .HasColumnType("datetime(6)");
+
         builder.Property(e => e.UpdateAt)
             .HasColumnType("datetime(6)")
             .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
             .ValueGeneratedOnAddOrUpdate();
 
-        builder.Property(e => e.DeleteAt)
-            .HasColumnType("datetime(6)");
-
+        builder.Property(e => e.LastLoginAt)
+            .HasColumnType("datetime(6)")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
         /* ---------- 索引 ---------- */
         // 唯一作用：保证未删除邮箱唯一 + 同时覆盖 Email / Email+DeleteAt 查询
         builder.HasIndex(e => new { e.Email, e.DeleteAt })
@@ -218,6 +226,12 @@ public class AccountUserEntityConfig :
         // 时间排序/分页
         builder.HasIndex(e => e.CreatedAt)
             .HasDatabaseName("IX_AccountUser_CreatedAt");
+
+        builder.HasIndex(e => e.UpdateAt)
+            .HasDatabaseName("IX_AccountUser_UpdateAt");
+
+        builder.HasIndex(e => e.LastLoginAt)
+            .HasDatabaseName("IX_AccountUser_LastLoginAt");
 
         /* --------- 导航属性 --------- */
         builder.HasMany(u => u.UserGroups)
@@ -236,7 +250,8 @@ public class AccountUserEntityConfig :
         /* ---------- 字段 ---------- */
         builder.Property(ug => ug.JoinedAt)
             .IsRequired()
-            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
+            .ValueGeneratedOnAdd();
         /* ---------- 索引 ---------- */
         builder.HasIndex(ug => ug.GroupId)
             .HasDatabaseName("IX_UserGroup_GroupId");

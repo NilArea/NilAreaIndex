@@ -18,14 +18,21 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/Blog.vue')
   },
   {
-    path: '/controller',
-    name: 'Controller',
-    component: () => import('../views/ControlPanel.vue'),
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('../views/Admin.vue'),
     meta: {
       title: '控制面板',
       hideFooter: true,
       requireAdmin: true
-    }
+    },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'DashBoard',
+        component: () => null
+      }
+    ]
   },
   {
     path: '/sign',

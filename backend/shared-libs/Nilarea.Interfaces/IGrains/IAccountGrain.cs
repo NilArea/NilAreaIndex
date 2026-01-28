@@ -3,27 +3,49 @@ using NilArea.Interfaces.Exceptions;
 
 namespace NilArea.Interfaces.IGrains;
 
+/// <summary>
+///     瞬态 账号管理
+/// </summary>
+/// <exception cref="AccountException">该Grain类异常均封装为该异常</exception>
 [Alias("NilArea.Interfaces.IGrains.IAccountGrain")]
 public interface IAccountGrain : IGrainWithGuidKey
 {
     /// <summary>
-    ///     邮箱是否已被使用
+    ///     邮箱是否在使用
     /// </summary>
     /// <param name="email">邮箱</param>
-    /// <returns>是否已被使用</returns>
-    /// <exception cref="ArgumentNullException">email is null</exception>
-    [Alias("ExistEmailAsync")]
-    ValueTask<bool> ExistEmailAsync(string email);
+    [Alias("ExistAccountAsync")]
+    ValueTask<bool> ExistAccountAsync(string email);
 
     /// <summary>
-    ///     注册帐号
+    ///     通知发送验证码
     /// </summary>
-    /// <param name="request">注册传入信息</param>
-    /// <returns>注册结果</returns>
-    /// <exception cref="AccountException">注册失败</exception>
-    [Alias("RegisterUserAsync")]
-    ValueTask<RegisterResponse> RegisterUserAsync(RegisterRequest request);
+    [Alias("CallConfirmKey")]
+    ValueTask CallConfirmKey(string email, ConfirmKey keyCode = ConfirmKey.Default);
 
-    [Alias("LoginAsync")]
-    ValueTask<LoginResponse> LoginAsync(LoginRequest request);
+    /// <summary>
+    ///     注册账号
+    /// </summary>
+    [Alias("RegisterUserAsync")]
+    ValueTask<Responses.Register> RegisterUserAsync(Requests.RegisterAccount request);
+
+    /// <summary>
+    ///     删除账号
+    /// </summary>
+    [Alias("DeleteAccountAsync")]
+    ValueTask DeleteAccountAsync(Requests.DeleteAccount request);
+
+    /// <summary>
+    ///     修改i密码
+    /// </summary>
+    [Alias("ChangePasswd")]
+    ValueTask ChangePasswd(Requests.ChangePasswd request);
+}
+
+public enum ConfirmKey
+{
+    Default,
+    Register,
+    ChangePasswd,
+    DeleteAccount
 }

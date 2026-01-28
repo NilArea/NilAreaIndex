@@ -61,9 +61,11 @@ public static class Configures
 
         public IServiceCollection AddNilareaServices(IConfiguration configuration)
         {
-            return collection
+            collection
                 .AddSingleton<IAccountRepository, AccountRepository>()
+                .AddSingleton<IEmailServices, EmailServices>()
                 .AddHostedService<ServiceInitializer>();
+            return collection;
         }
     }
 }

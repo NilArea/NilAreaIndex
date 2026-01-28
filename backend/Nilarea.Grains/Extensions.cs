@@ -14,10 +14,6 @@ public static class Extensions
                 .ApplyConfiguration<AccountUserDto>(ec)
                 .ApplyConfiguration<AccountGroupDto>(ec)
                 .ApplyConfiguration<AccountUserGroup>(ec);
-            modelBuilder.Entity<AccountUserDto>()
-                .HasQueryFilter(static u => u.DeleteAt == null);
-            modelBuilder.Entity<AccountGroupDto>()
-                .HasQueryFilter(static g => g.DeleteAt == null);
             return modelBuilder;
         }
     }

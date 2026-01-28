@@ -18,15 +18,17 @@ public class OrleansExceptionHandler(
 
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+        var context = new ProblemDetailsContext
         {
             HttpContext = httpContext,
             Exception = exception,
             ProblemDetails = new ProblemDetails
             {
-                Title = "An Error Occured",
+                Title = exception.Message,
                 Status = StatusCodes.Status500InternalServerError
             }
-        });
+        };
+
+        return await problemDetailsService.TryWriteAsync(context);
     }
 }

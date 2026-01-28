@@ -7,6 +7,7 @@ using NilArea.Contracts.Dto;
 using NilArea.Grains.DbContext;
 using NilArea.Grains.Dtos;
 using NilArea.Interfaces.Exceptions;
+using NilArea.Interfaces.IGrains;
 using StackExchange.Redis;
 
 namespace NilArea.Grains.Services;
@@ -15,45 +16,71 @@ public interface IAccountRepository
 {
     internal ValueTask InitializeAsync();
     ValueTask<bool> ExistsAccountAsync(string email);
-    ValueTask<RegisterResponse> InsertAccountAsync(RegisterRequest accountInfo);
-    ValueTask<LoginResponse> VerifyLoginInfoAsync(LoginRequest loginInfo);
+    ValueTask CacheConfirmKeyAsync(string email, string key, ConfirmKey keyCode);
+    ValueTask<bool> CheckConfirmKeyAsync(string email, string key);
+    ValueTask<AccountUserDto> InsertAccountAsync(string email, string passwordHash, string username);
+    ValueTask<AccountUserDto> FindAccountAsync(string email);
+    public ValueTask<TokenPair> GenerateTokenAsync(long userId, bool overwrite = true);
 }
 
 public sealed class AccountRepository(
     ILogger<AccountRepository> logger,
     NilDbContext dbContext,
     IIdGenerator<long> idGenerator,
-    IPasswordHasher passwordHasher,
     IRedisDatabaseFactory redisDatabaseFactory)
     : IAccountRepository
 {
-    private static RedisKey BfAcount => StaticValues.BfAcount;
+    private static RedisKey BfAccount => StaticValues.BfAccount;
+    private static RedisKey ConfirmKeyPrefix => StaticValues.ConfirmKeyPrefix;
 
     private IDatabase Redis { get; } = redisDatabaseFactory.GetDatabase();
+    private Dictionary<string, int> SystemGroupMap { get; set; } = null!;
 
     public async ValueTask<bool> ExistsAccountAsync(string email)
     {
-        if (!await Redis.BloomExistsAsync(BfAcount, email)) return false;
+        if (!await Redis.BloomExistsAsync(BfAccount, email)) return false;
         return await dbContext.AccountUsers.AnyAsync(au =>
             au.Email == email && au.DeleteAt == null);
     }
 
-    public async ValueTask<RegisterResponse> InsertAccountAsync(RegisterRequest accountInfo)
+    public async ValueTask CacheConfirmKeyAsync(string email, string key, ConfirmKey keyCode)
     {
-        if (await ExistsAccountAsync(accountInfo.Email))
+        var rk = ConfirmKeyPrefix.Append(email);
+        if (await Redis.KeyExistsAsync(rk))
+            throw new AccountException("Confirm key still not expired");
+        await Redis.StringSetAsync(rk, key, GetExpirationTime());
+        return;
+
+        TimeSpan GetExpirationTime()
+        {
+            return keyCode switch
+            {
+                _ => TimeSpan.FromMinutes(5)
+            };
+        }
+    }
+
+    public async ValueTask<bool> CheckConfirmKeyAsync(string email, string key)
+    {
+        var rk = ConfirmKeyPrefix.Append(email);
+        var c = await Redis.StringGetAsync(rk);
+        return !c.IsNull && string.Equals(c, key);
+    }
+
+    public async ValueTask<AccountUserDto> InsertAccountAsync(string email, string passwordHash, string username)
+    {
+        if (await ExistsAccountAsync(email))
             throw new AccountException("Email already registered", AccountAction.Register);
         var uid = idGenerator.NextId();
         var add = new AccountUserDto
         {
             UserId = uid,
-            Email = accountInfo.Email,
-            UserName = accountInfo.Username,
-            PasswordSaltHash = passwordHasher.SaltedHash(accountInfo.Password),
+            Email = email,
+            UserName = username,
+            PasswordSaltHash = passwordHash,
             CreatedAt = DateTime.UtcNow
         };
-        var gid = await dbContext.AccountGroups
-            .Where(g => g.GroupName == StaticValues.AccountSystemGroupNames.User)
-            .Select(g => g.GroupId).FirstAsync();
+        var gid = SystemGroupMap[StaticValues.AccountSystemGroupNames.User];
         var ug = new AccountUserGroup
         {
             UserId = uid,
@@ -64,31 +91,35 @@ public sealed class AccountRepository(
         try
         {
             await dbContext.SaveChangesAsync();
-            await Redis.BloomAddAsync(BfAcount, add.Email);
+            await Redis.BloomAddAsync(BfAccount, add.Email);
         }
         catch (DbUpdateException ex)when (ex.InnerException is MySqlException { Number: 1062 })
         {
             throw new AccountException("Account already exists.", AccountAction.Register);
         }
 
-        return new RegisterResponse
-        {
-            UserId = uid,
-            Email = accountInfo.Email,
-            Username = accountInfo.Username,
-            CreatedAt = add.CreatedAt
-        };
+        return add;
     }
 
-    public async ValueTask<LoginResponse> VerifyLoginInfoAsync(LoginRequest loginInfo)
+    public async ValueTask<AccountUserDto> FindAccountAsync(string email)
     {
         var account = await dbContext.AccountUsers
-            .FirstOrDefaultAsync(au => au.Email == loginInfo.Email && au.DeleteAt == null);
+            .FirstOrDefaultAsync(au => au.Email == email && au.DeleteAt == null);
         if (account is null)
-            throw new AccountException("Email does not registered", AccountAction.Login);
-        if (!passwordHasher.Verify(loginInfo.Password, account.PasswordSaltHash))
-            throw new AccountException("Password does not match", AccountAction.Login);
-        return await GenLoginResponseAsync(account.UserId);
+            throw new AuthenticationException("Email does not registered");
+        return account;
+    }
+
+    public async ValueTask<TokenPair> GenerateTokenAsync(long userId, bool overwrite = true)
+    {
+        var user = await dbContext.AccountUsers.FirstAsync(u => u.UserId == userId);
+        return new TokenPair
+        {
+            AccessToken = string.Empty,
+            AccessExpire = DateTime.UtcNow.AddMinutes(15),
+            RefreshToken = string.Empty,
+            RefreshExpire = DateTime.UtcNow.AddDays(3)
+        };
     }
 
 
@@ -96,24 +127,16 @@ public sealed class AccountRepository(
     {
         try
         {
-            await Redis.BloomReserveAsync(BfAcount, 0.01d, 16384);
+            await Redis.BloomReserveAsync(BfAccount, 0.01d, 16384);
+            logger.LogInformation("Successful Create BloomFilter 'BF:Account'");
         }
         catch (InvalidOperationException ex)
         {
-            logger.LogWarning(ex, "Try Create a new BF, but it was existed");
+            logger.LogWarning(ex, "BloomFilter 'BF:Account' already Created");
         }
-    }
 
-    private static RedisKey GenRedisKey()
-    {
-        throw new NotImplementedException();
-    }
-
-    private async ValueTask<LoginResponse> GenLoginResponseAsync(long userId)
-    {
-        return new LoginResponse
-        {
-            UserId = userId
-        };
+        SystemGroupMap = await dbContext.AccountGroups
+            .Where(g => g.IsSystemGroup == true)
+            .ToDictionaryAsync(g => g.GroupName, g => g.GroupId);
     }
 }

@@ -1,3 +1,5 @@
+using System.Runtime.Serialization;
+
 namespace NilArea.Interfaces.Exceptions;
 
 [Serializable]
@@ -14,6 +16,11 @@ public class AccountException : OrleansException
         message, inner) =>
         AccountAction = action;
 
+    [Obsolete]
+    protected AccountException(SerializationInfo info, StreamingContext context) : base(info, context)
+    {
+    }
+
     [Id(0)] public AccountAction AccountAction { get; init; }
 }
 
@@ -21,7 +28,7 @@ public enum AccountAction
 {
     Default,
     Register,
-    Login,
+    Delete,
     ChangePassword,
-    VerifyAccount
+    ChangePermissions
 }
