@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
@@ -12,14 +13,14 @@ using StackExchange.Redis;
 
 namespace NilArea.Grains.Services;
 
-public interface IAccountRepository
+public interface IAccountRepository : IAsyncLifetime
 {
-    internal ValueTask InitializeAsync();
     ValueTask<bool> ExistsAccountAsync(string email);
     ValueTask CacheConfirmKeyAsync(string email, string key, ConfirmKey keyCode);
     ValueTask<bool> CheckConfirmKeyAsync(string email, string key);
-    ValueTask<AccountUserDto> InsertAccountAsync(string email, string passwordHash, string username);
-    ValueTask<AccountUserDto> FindAccountAsync(string email);
+    ValueTask<AccountUser> InsertAccountAsync(string email, string passwordHash, string username);
+    ValueTask<AccountUser> FindAccountAsync(string email);
+    ValueTask<T> FindAccountAsync<T>(string email, Expression<Func<AccountUser, T>> select);
     public ValueTask<TokenPair> GenerateTokenAsync(long userId, bool overwrite = true);
 }
 
@@ -67,12 +68,12 @@ public sealed class AccountRepository(
         return !c.IsNull && string.Equals(c, key);
     }
 
-    public async ValueTask<AccountUserDto> InsertAccountAsync(string email, string passwordHash, string username)
+    public async ValueTask<AccountUser> InsertAccountAsync(string email, string passwordHash, string username)
     {
         if (await ExistsAccountAsync(email))
             throw new AccountException("Email already registered", AccountAction.Register);
         var uid = idGenerator.NextId();
-        var add = new AccountUserDto
+        var add = new AccountUser
         {
             UserId = uid,
             Email = email,
@@ -80,7 +81,7 @@ public sealed class AccountRepository(
             PasswordSaltHash = passwordHash,
             CreatedAt = DateTime.UtcNow
         };
-        var gid = SystemGroupMap[StaticValues.AccountSystemGroupNames.User];
+        var gid = SystemGroupMap[StaticValues.AccountSystemGroupNames.Users];
         var ug = new AccountUserGroup
         {
             UserId = uid,
@@ -101,13 +102,23 @@ public sealed class AccountRepository(
         return add;
     }
 
-    public async ValueTask<AccountUserDto> FindAccountAsync(string email)
+    public async ValueTask<AccountUser> FindAccountAsync(string email)
     {
         var account = await dbContext.AccountUsers
             .FirstOrDefaultAsync(au => au.Email == email && au.DeleteAt == null);
         if (account is null)
             throw new AuthenticationException("Email does not registered");
         return account;
+    }
+
+    public async ValueTask<T> FindAccountAsync<T>(string email, Expression<Func<AccountUser, T>> select)
+    {
+        if (!await dbContext.AccountUsers.AnyAsync(au => au.Email == email && au.DeleteAt == null))
+            throw new AuthenticationException("Email does not registered");
+        return await dbContext.AccountUsers
+            .Where(au => au.Email == email && au.DeleteAt == null)
+            .Select(select)
+            .FirstAsync();
     }
 
     public async ValueTask<TokenPair> GenerateTokenAsync(long userId, bool overwrite = true)
@@ -122,8 +133,7 @@ public sealed class AccountRepository(
         };
     }
 
-
-    public async ValueTask InitializeAsync()
+    public async Task InitializeAsync()
     {
         try
         {
@@ -135,8 +145,23 @@ public sealed class AccountRepository(
             logger.LogWarning(ex, "BloomFilter 'BF:Account' already Created");
         }
 
-        SystemGroupMap = await dbContext.AccountGroups
-            .Where(g => g.IsSystemGroup == true)
-            .ToDictionaryAsync(g => g.GroupName, g => g.GroupId);
+        try
+        {
+            SystemGroupMap = await dbContext.AccountGroups
+                .Where(g => g.IsSystemGroup == true)
+                .Select(g => new { g.GroupName, g.GroupId })
+                .ToDictionaryAsync(g => g.GroupName, g => g.GroupId);
+            logger.LogInformation("Successful Create SystemGroupMap 'SystemGroupMap'");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to create system groups");
+        }
+    }
+
+    public Task DisposeAsync()
+    {
+        logger.LogInformation("Disposing Account Repository");
+        return Task.CompletedTask;
     }
 }

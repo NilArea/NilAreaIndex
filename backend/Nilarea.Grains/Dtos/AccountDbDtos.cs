@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace NilArea.Grains.Dtos;
 
-public class AccountUserDto
+public class AccountUser
 {
     /// <summary>
     ///     用户唯一ID
@@ -46,21 +46,26 @@ public class AccountUserDto
     ///     用户信息更新时间
     /// </summary>
     [DataType("datetime(6)")]
-    public DateTime? UpdateAt { get; set; }
+    public DateTime UpdateAt { get; set; }
 
     /// <summary>
     ///     用户最近登录时间
     /// </summary>
     [DataType("datetime(6)")]
-    public DateTime LastLoginAt { get; set; }
+    public DateTime? LastLoginAt { get; set; }
 
     /// <summary>
     ///     用户所属组
     /// </summary>
     public virtual ICollection<AccountUserGroup> UserGroups { get; } = [];
+
+    /// <summary>
+    ///     用户权限
+    /// </summary>
+    public virtual ICollection<UserPermission> Permissions { get; } = [];
 }
 
-public class AccountGroupDto
+public class AccountGroup
 {
     /// <summary>
     ///     组唯一ID
@@ -93,15 +98,23 @@ public class AccountGroupDto
     ///     组删除时间,系统组和未删除为null
     /// </summary>
     [DataType("datetime(6)")]
-    public DateTime? DeleteAt { get; init; }
+    public DateTime? DeleteAt { get; set; }
 
     /// <summary>
     ///     组内容更新时间
     /// </summary>
     [DataType("datetime(6)")]
-    public DateTime UpdateAt { get; init; }
+    public DateTime UpdateAt { get; set; }
 
+    /// <summary>
+    ///     组用户
+    /// </summary>
     public virtual ICollection<AccountUserGroup> UserGroups { get; } = [];
+
+    /// <summary>
+    ///     组权限
+    /// </summary>
+    public virtual ICollection<GroupPermission> Permissions { get; } = [];
 }
 
 public class AccountUserGroup
@@ -111,16 +124,43 @@ public class AccountUserGroup
     [DataType("datetime(6)")] public DateTime JoinedAt { get; init; }
 
     // 导航属性
-    public virtual AccountUserDto User { get; set; } = null!;
-    public virtual AccountGroupDto Group { get; set; } = null!;
+    public virtual AccountUser User { get; set; } = null!;
+    public virtual AccountGroup Group { get; set; } = null!;
+}
+
+public class PermissionTag
+{
+    public required short PermissionId { get; init; }
+    [MaxLength(100)] public required string PermissionName { get; init; }
+    public virtual ICollection<UserPermission> UserPermissions { get; } = [];
+    public virtual ICollection<GroupPermission> GroupPermissions { get; } = [];
+}
+
+public class UserPermission
+{
+    public required long UserId { get; init; }
+    public required short PermissionId { get; init; }
+    public virtual AccountUser User { get; set; } = null!;
+    public virtual PermissionTag Permission { get; set; } = null!;
+}
+
+public class GroupPermission
+{
+    public required int GroupId { get; init; }
+    public required short PermissionId { get; init; }
+    public virtual AccountGroup Group { get; set; } = null!;
+    public virtual PermissionTag Permission { get; set; } = null!;
 }
 
 public class AccountUserEntityConfig :
-    IEntityTypeConfiguration<AccountUserDto>,
-    IEntityTypeConfiguration<AccountGroupDto>,
-    IEntityTypeConfiguration<AccountUserGroup>
+    IEntityTypeConfiguration<AccountUser>,
+    IEntityTypeConfiguration<AccountGroup>,
+    IEntityTypeConfiguration<AccountUserGroup>,
+    IEntityTypeConfiguration<PermissionTag>,
+    IEntityTypeConfiguration<UserPermission>,
+    IEntityTypeConfiguration<GroupPermission>
 {
-    public void Configure(EntityTypeBuilder<AccountGroupDto> builder)
+    public void Configure(EntityTypeBuilder<AccountGroup> builder)
     {
         /* ---------- 表 & 主键 ---------- */
         builder.ToTable("AccountGroup");
@@ -140,10 +180,12 @@ public class AccountUserEntityConfig :
             .HasMaxLength(500);
 
         builder.Property(e => e.IsSystemGroup)
+            .IsRequired()
             .HasDefaultValue(false);
 
         builder.Property(e => e.CreatedAt)
             .HasColumnType("datetime(6)")
+            .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
             .ValueGeneratedOnAdd();
 
@@ -153,28 +195,34 @@ public class AccountUserEntityConfig :
             .ValueGeneratedOnAddOrUpdate();
 
         builder.Property(e => e.DeleteAt)
-            .HasColumnType("datetime(6)");
+            .HasColumnType("datetime(6)")
+            .ValueGeneratedNever();
         /* ---------- 索引 ---------- */
-        builder.HasIndex(e => new { e.GroupId, e.GroupName, e.DeleteAt })
-            .HasDatabaseName("IX_AccountGroup_DeleteAt")
-            .IsUnique()
-            .HasFilter($"{nameof(AccountGroupDto.DeleteAt)} IS NULL");
+        builder.HasIndex(e => e.GroupName)
+            .HasDatabaseName("IX_AccountGroup_AllGroup")
+            .HasFilter($"{nameof(AccountGroup.DeleteAt)} IS NULL")
+            .IsUnique();
 
-        builder.HasIndex(e => new { e.GroupId, e.GroupName, e.IsSystemGroup })
+        builder.HasIndex(e => e.GroupName)
             .HasDatabaseName("IX_AccountGroup_SystemGroup")
-            .IsUnique()
-            .HasFilter($"{nameof(AccountGroupDto.IsSystemGroup)} = TRUE");
+            .HasFilter($"{nameof(AccountGroup.IsSystemGroup)} = TRUE")
+            .IsUnique();
 
         builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("IX_AccountGroup_CreatedAt");
+            .HasDatabaseName("IX_AccountGroup_CreatedAt")
+            .HasFilter($"{nameof(AccountGroup.DeleteAt)} IS NULL");
         /* --------- 导航属性 --------- */
         builder.HasMany(g => g.UserGroups)
             .WithOne(ug => ug.Group)
             .HasForeignKey(ug => ug.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(e => e.Permissions)
+            .WithOne(up => up.Group)
+            .HasForeignKey(up => up.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
-    public void Configure(EntityTypeBuilder<AccountUserDto> builder)
+    public void Configure(EntityTypeBuilder<AccountUser> builder)
     {
         /* ---------- 表 & 主键 ---------- */
         builder.ToTable("AccountUser");
@@ -202,41 +250,49 @@ public class AccountUserEntityConfig :
 
         builder.Property(e => e.CreatedAt)
             .HasColumnType("datetime(6)")
+            .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
             .ValueGeneratedOnAdd();
-
-        builder.Property(e => e.DeleteAt)
-            .HasColumnType("datetime(6)");
 
         builder.Property(e => e.UpdateAt)
             .HasColumnType("datetime(6)")
             .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
             .ValueGeneratedOnAddOrUpdate();
 
+        builder.Property(e => e.DeleteAt)
+            .HasColumnType("datetime(6)")
+            .ValueGeneratedNever();
+
         builder.Property(e => e.LastLoginAt)
             .HasColumnType("datetime(6)")
             .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
         /* ---------- 索引 ---------- */
-        // 唯一作用：保证未删除邮箱唯一 + 同时覆盖 Email / Email+DeleteAt 查询
-        builder.HasIndex(e => new { e.Email, e.DeleteAt })
-            .HasDatabaseName("IX_AccountUser_Email_DeleteAt")
-            .IsUnique()
-            .HasFilter($"{nameof(AccountUserDto.DeleteAt)} IS NULL");
+        builder.HasIndex(e => e.Email)
+            .HasDatabaseName("IX_AccountUser_AllEmail")
+            .HasFilter($"{nameof(AccountUser.DeleteAt)} IS NULL")
+            .IsUnique();
 
         // 时间排序/分页
         builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("IX_AccountUser_CreatedAt");
+            .HasDatabaseName("IX_AccountUser_CreatedAt")
+            .HasFilter($"{nameof(AccountUser.DeleteAt)} IS NULL");
 
         builder.HasIndex(e => e.UpdateAt)
-            .HasDatabaseName("IX_AccountUser_UpdateAt");
+            .HasDatabaseName("IX_AccountUser_UpdateAt")
+            .HasFilter($"{nameof(AccountUser.DeleteAt)} IS NULL");
 
         builder.HasIndex(e => e.LastLoginAt)
-            .HasDatabaseName("IX_AccountUser_LastLoginAt");
+            .HasDatabaseName("IX_AccountUser_LastLoginAt")
+            .HasFilter($"{nameof(AccountUser.DeleteAt)} IS NULL");
 
         /* --------- 导航属性 --------- */
         builder.HasMany(u => u.UserGroups)
             .WithOne(ug => ug.User)
             .HasForeignKey(ug => ug.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(e => e.Permissions)
+            .WithOne(up => up.User)
+            .HasForeignKey(up => up.UserId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 
@@ -249,6 +305,7 @@ public class AccountUserEntityConfig :
 
         /* ---------- 字段 ---------- */
         builder.Property(ug => ug.JoinedAt)
+            .HasColumnType("datetime(6)")
             .IsRequired()
             .HasDefaultValueSql("CURRENT_TIMESTAMP(6)")
             .ValueGeneratedOnAdd();
@@ -266,5 +323,74 @@ public class AccountUserEntityConfig :
         builder.HasOne(ug => ug.Group)
             .WithMany(g => g.UserGroups)
             .HasForeignKey(ug => ug.GroupId);
+    }
+
+    public void Configure(EntityTypeBuilder<GroupPermission> builder)
+    {
+        /* ---------- 表 & 主键 ---------- */
+        builder.ToTable("GroupPermission");
+        builder.HasKey(e => new { e.GroupId, e.PermissionId })
+            .HasName("PK_GroupPermission_GId_PID");
+        /* ---------- 索引 ---------- */
+        builder.HasIndex(ug => ug.GroupId)
+            .HasDatabaseName("IX_GroupPermission_GroupId");
+        builder.HasIndex(ug => ug.PermissionId)
+            .HasDatabaseName("IX_GroupPermission_PermissionId");
+        /* --------- 导航属性 --------- */
+        builder.HasOne(ug => ug.Group)
+            .WithMany(u => u.Permissions)
+            .HasForeignKey(ug => ug.GroupId);
+        builder.HasOne(ug => ug.Permission)
+            .WithMany(g => g.GroupPermissions)
+            .HasForeignKey(ug => ug.PermissionId);
+    }
+
+    public void Configure(EntityTypeBuilder<PermissionTag> builder)
+    {
+        /* ---------- 表 & 主键 ---------- */
+        builder.ToTable("PermissionTag");
+        builder.HasKey(e => e.PermissionId)
+            .HasName("PK_PermissionTag_Id");
+
+        builder.Property(e => e.PermissionId)
+            .IsRequired()
+            .ValueGeneratedOnAdd();
+        /* ---------- 字段 ---------- */
+        builder.Property(ug => ug.PermissionName)
+            .IsRequired()
+            .HasMaxLength(100);
+        /* ---------- 索引 ---------- */
+        builder.HasIndex(ug => ug.PermissionName)
+            .IsUnique()
+            .HasDatabaseName("IX_PermissionTag_Name");
+        /* --------- 导航属性 --------- */
+        builder.HasMany(pt => pt.UserPermissions)
+            .WithOne(pt => pt.Permission)
+            .HasForeignKey(pt => pt.PermissionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(pt => pt.GroupPermissions)
+            .WithOne(pt => pt.Permission)
+            .HasForeignKey(pt => pt.PermissionId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    public void Configure(EntityTypeBuilder<UserPermission> builder)
+    {
+        /* ---------- 表 & 主键 ---------- */
+        builder.ToTable("UserPermission");
+        builder.HasKey(e => new { e.UserId, e.PermissionId })
+            .HasName("PK_UserPermission_UId_PID");
+        /* ---------- 索引 ---------- */
+        builder.HasIndex(ug => ug.UserId)
+            .HasDatabaseName("IX_UserPermission_UserId");
+        builder.HasIndex(ug => ug.PermissionId)
+            .HasDatabaseName("IX_UserPermission_PermissionId");
+        /* --------- 导航属性 --------- */
+        builder.HasOne(ug => ug.User)
+            .WithMany(u => u.Permissions)
+            .HasForeignKey(ug => ug.UserId);
+        builder.HasOne(ug => ug.Permission)
+            .WithMany(g => g.UserPermissions)
+            .HasForeignKey(ug => ug.PermissionId);
     }
 }

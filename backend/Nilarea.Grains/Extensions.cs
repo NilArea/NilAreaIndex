@@ -11,9 +11,12 @@ public static class Extensions
         {
             var ec = new AccountUserEntityConfig();
             modelBuilder
-                .ApplyConfiguration<AccountUserDto>(ec)
-                .ApplyConfiguration<AccountGroupDto>(ec)
-                .ApplyConfiguration<AccountUserGroup>(ec);
+                .ApplyConfiguration<AccountUser>(ec)
+                .ApplyConfiguration<AccountGroup>(ec)
+                .ApplyConfiguration<AccountUserGroup>(ec)
+                .ApplyConfiguration<PermissionTag>(ec)
+                .ApplyConfiguration<UserPermission>(ec)
+                .ApplyConfiguration<GroupPermission>(ec);
             return modelBuilder;
         }
     }

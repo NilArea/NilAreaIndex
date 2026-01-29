@@ -16,5 +16,7 @@ public class ServiceInitializer(
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
+        await emailServices.DisposeAsync();
+        await accountRepository.DisposeAsync();
     }
 }

@@ -22,12 +22,13 @@ public sealed class AuthenticationGrain(
     {
         var validate = await loginRequestValidator.ValidateAsync(request);
         if (!validate.IsValid)
-            throw new AuthenticationException(validate.ToString());
+            throw new AuthenticationException(validate.ToString(), AuthenticationResult.Failed);
         if (!await accountRepository.ExistsAccountAsync(request.Email))
-            throw new AuthenticationException("Email is not registered");
-        var add = await accountRepository.FindAccountAsync(request.Email);
+            throw new AuthenticationException("Email is not registered", AuthenticationResult.Failed);
+        var add = await accountRepository
+            .FindAccountAsync(request.Email, au => new { au.UserId, au.PasswordSaltHash });
         if (!passwordHasher.Verify(request.Password, add.PasswordSaltHash))
-            throw new AuthenticationException("Password does not match");
+            throw new AuthenticationException("Password does not match", AuthenticationResult.Failed);
         var token = await accountRepository.GenerateTokenAsync(add.UserId);
         return new Responses.Login
         {

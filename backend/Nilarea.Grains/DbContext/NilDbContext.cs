@@ -7,9 +7,12 @@ namespace NilArea.Grains.DbContext;
 public class
     NilDbContext(DbContextOptions<NilDbContext> options) : AbstractShardingDbContext(options)
 {
-    public DbSet<AccountUserDto> AccountUsers { get; set; }
-    public DbSet<AccountGroupDto> AccountGroups { get; set; }
+    public DbSet<AccountUser> AccountUsers { get; set; }
+    public DbSet<AccountGroup> AccountGroups { get; set; }
     public DbSet<AccountUserGroup> AccountUserGroups { get; set; }
+    public DbSet<PermissionTag> PermissionTags { get; set; }
+    public DbSet<UserPermission> UserPermissions { get; set; }
+    public DbSet<GroupPermission> GroupPermissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

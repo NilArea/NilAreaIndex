@@ -13,8 +13,11 @@ public static class StaticValues
 
     public static class AccountSystemGroupNames
     {
-        public const string User = "User";
-        public const string Admin = "Group";
-        public static string[] SystemGroupNames = [User, Admin];
+        public const string Users = "Users";
+        public const string Administrators = "Administrators";
+        public const string PowerUsers = "PowerUsers";
+        public const string Guests = "Guests";
+        public const string BackupOperators = "BackupOperators";
+        public static string[] SystemGroupNames = [Administrators, PowerUsers, Users, Guests, BackupOperators];
     }
 }
