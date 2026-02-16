@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace NilArea.Api.Utils.ExceptionHandler;
+namespace NilArea.Web.Utils.ExceptionHandler;
 
 public class GlobalExceptionHandler(
     ILogger<GlobalExceptionHandler> logger,

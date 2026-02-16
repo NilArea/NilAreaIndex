@@ -14,11 +14,11 @@ namespace NilArea.Grains.ImplGrains;
 public sealed class AuthenticationGrain(
     ILogger<AuthenticationGrain> logger,
     IAccountRepository accountRepository,
-    IValidator<Requests.LoginAccount> loginRequestValidator,
+    IValidator<AccountLoginRequest> loginRequestValidator,
     IPasswordHasher passwordHasher
 ) : Grain, IAuthenticationGrain
 {
-    public async ValueTask<Responses.Login> LoginAsync(Requests.LoginAccount request)
+    public async ValueTask<AccountLoginResponse> LoginAsync(AccountLoginRequest request)
     {
         var validate = await loginRequestValidator.ValidateAsync(request);
         if (!validate.IsValid)
@@ -30,7 +30,7 @@ public sealed class AuthenticationGrain(
         if (!passwordHasher.Verify(request.Password, add.PasswordSaltHash))
             throw new AuthenticationException("Password does not match", AuthenticationResult.Failed);
         var token = await accountRepository.GenerateTokenAsync(add.UserId);
-        return new Responses.Login
+        return new AccountLoginResponse
         {
             UserId = add.UserId,
             AccessToken = token.AccessToken,
@@ -43,5 +43,12 @@ public sealed class AuthenticationGrain(
     public async ValueTask<bool> ValidateTokenAsync(string token)
     {
         throw new NotImplementedException();
+    }
+
+    public async ValueTask<bool> VarifyPermissionAsync(Guid userId, ICollection<string> requiredPermissions)
+    {
+        if (requiredPermissions.Count is 0) return true;
+        var permissions = await accountRepository.GetAllPermissionAsync(userId);
+        return !requiredPermissions.Except(permissions.Select(p => p.PermissionName)).Any();
     }
 }

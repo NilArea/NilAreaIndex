@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Configuration;
 
-namespace NilArea.Common.Utils;
+namespace NilArea.Common;
 
-public static class Extensions
+public static partial class Extensions
 {
     extension(IConfiguration configuration)
     {

@@ -7,10 +7,10 @@
     <div id="sign-container">
       <UCard>
         <template #header>
-          <button >aa</button>
+          <button>aa</button>
         </template>
         <template #footer>
-          <button >aa</button>
+          <button>aa</button>
         </template>
         <SignIn
           v-if="isSignIn"
@@ -25,7 +25,7 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
-import { SignIn, SignUp } from '../components/Sign';
+import { SignIn, SignUp } from '../../components/Sign';
 
 const isBgLoaded = ref(false);
 const isSignIn = ref(true);

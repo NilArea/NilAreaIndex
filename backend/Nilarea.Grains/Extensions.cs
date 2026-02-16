@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using NilArea.Grains.Dtos;
+using Microsoft.Extensions.DependencyInjection;
+using NilArea.Grains.Dbe;
 
 namespace NilArea.Grains;
 
@@ -18,6 +19,14 @@ public static class Extensions
                 .ApplyConfiguration<UserPermission>(ec)
                 .ApplyConfiguration<GroupPermission>(ec);
             return modelBuilder;
+        }
+    }
+
+    extension(IServiceCollection collection)
+    {
+        public IServiceCollection AddNilareaValidator()
+        {
+            return collection;
         }
     }
 }

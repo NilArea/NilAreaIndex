@@ -20,4 +20,9 @@ public static class StaticValues
         public const string BackupOperators = "BackupOperators";
         public static string[] SystemGroupNames = [Administrators, PowerUsers, Users, Guests, BackupOperators];
     }
+
+    public static class PermissionTags
+    {
+        public const string SystemAdmin = "sys:admin";
+    }
 }

@@ -1,4 +1,4 @@
-namespace NilArea.Grains.Services;
+namespace NilArea.Common.Services;
 
 public interface IAsyncLifetime
 {

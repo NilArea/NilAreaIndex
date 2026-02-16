@@ -1,21 +1,22 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using NilArea.Api.Utils;
 using NilArea.Contracts;
 using NilArea.Contracts.Dto;
 using NilArea.Interfaces.IGrains;
 using StackExchange.Redis;
+using StackExchange.Redis.Extensions.Core.Abstractions;
 
-// ReSharper disable once CheckNamespace
-namespace NilArea.Api.Controllers;
+namespace NilArea.Web.Controllers;
 
+[AllowAnonymous]
 [Route("/api/auth")]
 public class ApiAuthController(
     ILogger<ApiAuthController> logger,
     IClusterClient clusterClient,
-    IRedisDatabaseFactory redisDatabaseFactory,
-    IValidator<Requests.RegisterAccount> registerRequestValidator,
-    IValidator<Requests.LoginAccount> loginRequestValidator
+    IRedisDatabase redisDatabase,
+    IValidator<AccountRegisterRequest> registerRequestValidator,
+    IValidator<AccountLoginRequest> loginRequestValidator
 ) : ControllerBase
 {
     private static readonly InlineValidator<string> EmailValidator;
@@ -29,10 +30,9 @@ public class ApiAuthController(
         EmailValidator = validator;
     }
 
-    private IDatabase ReadonlyRedis { get; } = redisDatabaseFactory.GetDatabase();
     private static RedisKey BfAccount => StaticValues.BfAccount;
 
-
+    [AllowAnonymous]
     [HttpPost("register/confirm")]
     public async Task<IActionResult> RegisterConfirm([FromQuery] string email)
     {
@@ -47,10 +47,11 @@ public class ApiAuthController(
     /// </summary>
     /// <param name="request">注册信息</param>
     /// <returns>注册结果</returns>
+    [AllowAnonymous]
     [HttpPost("register")]
-    [ProducesResponseType(typeof(Responses.Register), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AccountRegisterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register([FromBody] Requests.RegisterAccount request)
+    public async Task<IActionResult> Register([FromBody] AccountRegisterRequest request)
     {
         await registerRequestValidator.ValidateAndThrowAsync(request);
         var ag = clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
@@ -64,15 +65,16 @@ public class ApiAuthController(
     /// </summary>
     /// <param name="request">登录凭证</param>
     /// <returns>登录结果和令牌</returns>
+    [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType(typeof(Responses.Login), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AccountLoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Login([FromBody] Requests.LoginAccount request)
+    public async Task<IActionResult> Login([FromBody] AccountLoginRequest request)
     {
         var validate = await loginRequestValidator.ValidateAsync(request);
         if (!validate.IsValid)
             throw new ValidationException(validate.Errors);
-        if (!await ReadonlyRedis.BloomExistsAsync(BfAccount, request.Email))
+        if (!await redisDatabase.Database.BloomExistsAsync(BfAccount, request.Email))
             return BadRequest("Email is not registered");
         var ag = clusterClient.GetGrain<IAuthenticationGrain>(Guid.Empty);
         return Ok(await ag.LoginAsync(request));

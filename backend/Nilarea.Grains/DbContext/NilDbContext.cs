@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using NilArea.Grains.Dtos;
+using NilArea.Grains.Dbe;
 using ShardingCore.Sharding;
 
 namespace NilArea.Grains.DbContext;

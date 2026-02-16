@@ -9,14 +9,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Folder Include="helpers\"/>
+        <Folder Include="Helpers\"/>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
-        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.2"/>
-        <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.2"/>
-        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.2"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3"/>
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1"/>
     </ItemGroup>
 
 </Project>

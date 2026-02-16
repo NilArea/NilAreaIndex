@@ -107,3 +107,11 @@ public class SnowflakeIdGeneratorOptions
     public long DatacenterId { get; set; } = 0;
     public long MachineId { get; set; } = 1;
 }
+
+public sealed class GuidGenerator : IIdGenerator<Guid>
+{
+    public Guid NextId()
+    {
+        return Guid.CreateVersion7();
+    }
+}

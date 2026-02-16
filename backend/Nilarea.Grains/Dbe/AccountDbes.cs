@@ -2,14 +2,14 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace NilArea.Grains.Dtos;
+namespace NilArea.Grains.Dbe;
 
-public class AccountUser
+public sealed class AccountUser
 {
     /// <summary>
     ///     用户唯一ID
     /// </summary>
-    public required long UserId { get; init; }
+    public required Guid UserId { get; init; }
 
     /// <summary>
     ///     用户绑定邮箱
@@ -57,15 +57,15 @@ public class AccountUser
     /// <summary>
     ///     用户所属组
     /// </summary>
-    public virtual ICollection<AccountUserGroup> UserGroups { get; } = [];
+    public ICollection<AccountUserGroup> UserGroups { get; } = [];
 
     /// <summary>
     ///     用户权限
     /// </summary>
-    public virtual ICollection<UserPermission> Permissions { get; } = [];
+    public ICollection<UserPermission> Permissions { get; } = [];
 }
 
-public class AccountGroup
+public sealed class AccountGroup
 {
     /// <summary>
     ///     组唯一ID
@@ -109,47 +109,47 @@ public class AccountGroup
     /// <summary>
     ///     组用户
     /// </summary>
-    public virtual ICollection<AccountUserGroup> UserGroups { get; } = [];
+    public ICollection<AccountUserGroup> UserGroups { get; } = [];
 
     /// <summary>
     ///     组权限
     /// </summary>
-    public virtual ICollection<GroupPermission> Permissions { get; } = [];
+    public ICollection<GroupPermission> Permissions { get; } = [];
 }
 
-public class AccountUserGroup
+public sealed class AccountUserGroup
 {
-    public required long UserId { get; init; }
+    public required Guid UserId { get; init; }
     public required int GroupId { get; init; }
     [DataType("datetime(6)")] public DateTime JoinedAt { get; init; }
 
     // 导航属性
-    public virtual AccountUser User { get; set; } = null!;
-    public virtual AccountGroup Group { get; set; } = null!;
+    public AccountUser User { get; set; } = null!;
+    public AccountGroup Group { get; set; } = null!;
 }
 
-public class PermissionTag
+public sealed class PermissionTag
 {
     public required short PermissionId { get; init; }
     [MaxLength(100)] public required string PermissionName { get; init; }
-    public virtual ICollection<UserPermission> UserPermissions { get; } = [];
-    public virtual ICollection<GroupPermission> GroupPermissions { get; } = [];
+    public ICollection<UserPermission> UserPermissions { get; } = [];
+    public ICollection<GroupPermission> GroupPermissions { get; } = [];
 }
 
-public class UserPermission
+public sealed class UserPermission
 {
-    public required long UserId { get; init; }
+    public required Guid UserId { get; init; }
     public required short PermissionId { get; init; }
-    public virtual AccountUser User { get; set; } = null!;
-    public virtual PermissionTag Permission { get; set; } = null!;
+    public AccountUser User { get; set; } = null!;
+    public PermissionTag Permission { get; set; } = null!;
 }
 
-public class GroupPermission
+public sealed class GroupPermission
 {
     public required int GroupId { get; init; }
     public required short PermissionId { get; init; }
-    public virtual AccountGroup Group { get; set; } = null!;
-    public virtual PermissionTag Permission { get; set; } = null!;
+    public AccountGroup Group { get; set; } = null!;
+    public PermissionTag Permission { get; set; } = null!;
 }
 
 public class AccountUserEntityConfig :
@@ -231,7 +231,7 @@ public class AccountUserEntityConfig :
 
         builder.Property(e => e.UserId)
             .IsRequired()
-            .ValueGeneratedNever(); // 雪花算法
+            .ValueGeneratedNever(); // GUID7算法
 
         /* ---------- 字段 ---------- */
         builder.Property(e => e.Email)

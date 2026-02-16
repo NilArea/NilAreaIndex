@@ -27,19 +27,19 @@ public interface IAccountGrain : IGrainWithGuidKey
     ///     注册账号
     /// </summary>
     [Alias("RegisterUserAsync")]
-    ValueTask<Responses.Register> RegisterUserAsync(Requests.RegisterAccount request);
+    ValueTask<AccountRegisterResponse> RegisterUserAsync(AccountRegisterRequest request);
 
     /// <summary>
     ///     删除账号
     /// </summary>
     [Alias("DeleteAccountAsync")]
-    ValueTask DeleteAccountAsync(Requests.DeleteAccount request);
+    ValueTask DeleteAccountAsync(DeleteAccountRequest request);
 
     /// <summary>
     ///     修改i密码
     /// </summary>
     [Alias("ChangePasswd")]
-    ValueTask ChangePasswd(Requests.ChangePasswd request);
+    ValueTask ChangePasswd(ChangePasswdRequest request);
 }
 
 public enum ConfirmKey

@@ -1,7 +1,5 @@
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using NilArea.Common.Utils;
-using NilArea.Contracts;
+using NilArea.Common;
 using NilArea.Silo;
 using Orleans.Configuration;
 using Orleans.Dashboard;
@@ -14,13 +12,12 @@ builder.UseOrleans(siloBuilder =>
 
     siloBuilder
         .ConfigureServices(services => services
-            .AddContractsValidators()
+            .AddDataValidators(configuration)
             .AddNilareaTools(configuration)
-            .AddNilareaCache(configuration)
             .AddNilareaDbContext(configuration)
+            .AddNilareaCache(configuration)
             .AddNilareaServices(configuration))
-        .AddDashboard()
-        .ConfigureLogging(logging => logging.AddConsole());
+        .AddDashboard();
 #if DEBUG
     siloBuilder
         .Configure<ClusterOptions>(options =>

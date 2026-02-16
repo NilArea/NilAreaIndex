@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using NilArea.Interfaces.Exceptions;
 
-namespace NilArea.Api.Utils.ExceptionHandler;
+namespace NilArea.Web.Utils.ExceptionHandler;
 
 public class OrleansExceptionHandler(
     ILogger<GlobalExceptionHandler> logger,
@@ -19,9 +19,9 @@ public class OrleansExceptionHandler(
 
         var context = oe switch
         {
-            AccountException ae => HandleAccountException(httpContext, ae, cancellationToken),
-            AuthenticationException aue => HandleAuthenticationException(httpContext, aue, cancellationToken),
-            _ => HandleDefaultException(httpContext, oe, cancellationToken)
+            AccountException ae => HandleAccountException(httpContext, ae),
+            AuthenticationException aue => HandleAuthenticationException(httpContext, aue),
+            _ => HandleDefaultException(httpContext, oe)
         };
 
         return await problemDetailsService.TryWriteAsync(context);
@@ -32,8 +32,7 @@ public class OrleansExceptionHandler(
     /// </summary>
     private static ProblemDetailsContext HandleDefaultException(
         HttpContext httpContext,
-        OrleansException exception,
-        CancellationToken cancellationToken)
+        OrleansException exception)
     {
         httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
         var context = new ProblemDetailsContext
@@ -54,8 +53,7 @@ public class OrleansExceptionHandler(
     /// </summary>
     private static ProblemDetailsContext HandleAccountException(
         HttpContext httpContext,
-        AccountException exception,
-        CancellationToken cancellationToken)
+        AccountException exception)
     {
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
         var context = new ProblemDetailsContext
@@ -76,8 +74,7 @@ public class OrleansExceptionHandler(
     /// </summary>
     private static ProblemDetailsContext HandleAuthenticationException(
         HttpContext httpContext,
-        AuthenticationException exception,
-        CancellationToken cancellationToken)
+        AuthenticationException exception)
     {
         var code = exception.Result switch
         {

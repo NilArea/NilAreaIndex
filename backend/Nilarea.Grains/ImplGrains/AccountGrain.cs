@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using NilArea.Common.Utils;
 using NilArea.Contracts.Dto;
 using NilArea.Grains.Services;
-using NilArea.Grains.Utils;
 using NilArea.Interfaces.Exceptions;
 using NilArea.Interfaces.IGrains;
 using Orleans.Concurrency;
@@ -16,7 +15,7 @@ public class AccountGrain(
     ILogger<AccountGrain> logger,
     IAccountRepository accountRepository,
     IEmailServices emailServices,
-    IValidator<Requests.RegisterAccount> registerRequestValidator,
+    IValidator<AccountRegisterRequest> registerRequestValidator,
     IPasswordHasher passwordHasher
 ) : Grain, IAccountGrain
 {
@@ -49,7 +48,7 @@ public class AccountGrain(
         await emailServices.SendConfirmKeyAsync(email, confirmKey, keyCode);
     }
 
-    public async ValueTask<Responses.Register> RegisterUserAsync(Requests.RegisterAccount request)
+    public async ValueTask<AccountRegisterResponse> RegisterUserAsync(AccountRegisterRequest request)
     {
         var validate = await registerRequestValidator.ValidateAsync(request);
         if (!validate.IsValid)
@@ -62,7 +61,7 @@ public class AccountGrain(
             request.Email,
             passwordHasher.SaltedHash(request.Password),
             request.Username);
-        return new Responses.Register
+        return new AccountRegisterResponse
         {
             UserId = add.UserId,
             Email = add.Email,
@@ -71,12 +70,12 @@ public class AccountGrain(
         };
     }
 
-    public async ValueTask DeleteAccountAsync(Requests.DeleteAccount request)
+    public async ValueTask DeleteAccountAsync(DeleteAccountRequest request)
     {
         throw new NotImplementedException();
     }
 
-    public async ValueTask ChangePasswd(Requests.ChangePasswd request)
+    public async ValueTask ChangePasswd(ChangePasswdRequest request)
     {
         throw new NotImplementedException();
     }

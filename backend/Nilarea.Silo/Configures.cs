@@ -1,14 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NilArea.Common;
 using NilArea.Common.Utils;
+using NilArea.Contracts;
 using NilArea.Grains;
 using NilArea.Grains.DbContext;
 using NilArea.Grains.Services;
+using NilArea.Interfaces;
 using ShardingCore;
 using ShardingCore.Core.ShardingConfigurations;
 using ShardingCore.Sharding.ReadWriteConfigurations;
-using StackExchange.Redis;
+using StackExchange.Redis.Extensions.Core;
+using StackExchange.Redis.Extensions.Core.Abstractions;
+using StackExchange.Redis.Extensions.Core.Configuration;
+using StackExchange.Redis.Extensions.Core.Implementations;
+using StackExchange.Redis.Extensions.Newtonsoft;
 
 namespace NilArea.Silo;
 
@@ -16,14 +23,19 @@ public static class Configures
 {
     extension(IServiceCollection collection)
     {
+        public IServiceCollection AddDataValidators(IConfiguration configuration)
+        {
+            return collection
+                .AddCommonValidators()
+                .AddContractsValidators()
+                .AddInterfaceValidators()
+                .AddNilareaValidator();
+        }
+
         public IServiceCollection AddNilareaTools(IConfiguration configuration)
         {
             return collection
-                .Configure<SnowflakeIdGeneratorOptions>(options =>
-                {
-                    options.MachineId = configuration.SafeGetConfigureValue("CLUSTER_MACHINE_ID", 0);
-                })
-                .AddSingleton<IIdGenerator<long>, SnowflakeIdGenerator>()
+                .AddSingleton<IIdGenerator<Guid>, GuidGenerator>()
                 .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         }
 
@@ -53,9 +65,20 @@ public static class Configures
 
         public IServiceCollection AddNilareaCache(IConfiguration configuration)
         {
-            collection.AddSingleton<IConnectionMultiplexer>(_ =>
-                ConnectionMultiplexer.Connect(configuration.SafeGetConfigureValue("REDIS_CLUSTER")));
-            collection.AddSingleton<IRedisDatabaseFactory, RedisDatabaseFactory>();
+            collection.AddSingleton<IRedisClientFactory, RedisClientFactory>();
+            collection.AddSingleton<ISerializer, NewtonsoftSerializer>();
+            collection.AddSingleton<IRedisClient>(provider =>
+                provider.GetRequiredService<IRedisClientFactory>().GetDefaultRedisClient());
+            collection.AddSingleton<IRedisDatabase>(provider =>
+                provider.GetRequiredService<IRedisClientFactory>().GetDefaultRedisClient().GetDefaultDatabase());
+            collection.AddSingleton<IEnumerable<RedisConfiguration>>(sp =>
+            {
+                var conf = new RedisConfiguration
+                {
+                    ConnectionString = configuration.SafeGetConfigureValue("REDIS_CLUSTER")
+                };
+                return [conf];
+            });
             return collection;
         }
 

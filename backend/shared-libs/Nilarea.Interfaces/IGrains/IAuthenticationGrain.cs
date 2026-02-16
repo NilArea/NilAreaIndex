@@ -11,8 +11,11 @@ namespace NilArea.Interfaces.IGrains;
 public interface IAuthenticationGrain : IGrainWithGuidKey
 {
     [Alias("LoginAsync")]
-    ValueTask<Responses.Login> LoginAsync(Requests.LoginAccount request);
+    ValueTask<AccountLoginResponse> LoginAsync(AccountLoginRequest request);
 
     [Alias("ValidateTokenAsync")]
     ValueTask<bool> ValidateTokenAsync(string token);
+
+    [Alias("VarifyPermissionAsync")]
+    ValueTask<bool> VarifyPermissionAsync(Guid userId, ICollection<string> requiredPermissions);
 }

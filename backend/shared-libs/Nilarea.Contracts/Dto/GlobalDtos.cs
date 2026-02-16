@@ -1,7 +1,6 @@
 namespace NilArea.Contracts.Dto;
 
 [GenerateSerializer]
-[Alias("NilArea.Contracts.Dto.TokenPair")]
 public class TokenPair
 {
     [Id(0)] public required string AccessToken { get; init; }

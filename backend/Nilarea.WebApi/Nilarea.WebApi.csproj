@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <RootNamespace>NilArea.Api</RootNamespace>
+        <RootNamespace>NilArea.Web</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,14 +21,20 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\shared-libs\Nilarea.Contracts\Nilarea.Contracts.csproj"/>
         <ProjectReference Include="..\shared-libs\Nilarea.Interfaces\Nilarea.Interfaces.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Orleans.Client" Version="10.0.0"/>
-        <PackageReference Include="Microsoft.Orleans.Dashboard" Version="10.0.0"/>
-        <PackageReference Include="StackExchange.Redis.Extensions.Core" Version="11.0.0"/>
+        <PackageReference Include="Microsoft.Orleans.Client" Version="10.0.1"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3"/>
+        <PackageReference Include="OpenSearch.Client.JsonNetSerializer" Version="1.8.0"/>
+        <PackageReference Include="StackExchange.Redis.Extensions.AspNetCore" Version="11.0.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Orleans.Dashboard" Version="10.0.1"/>
+    </ItemGroup>
 </Project>

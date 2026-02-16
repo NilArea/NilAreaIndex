@@ -16,6 +16,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solotion Items", "Solotion Items", "{228EA779-118B-4386-9394-3FB0BBF0EFD6}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		Graph.md = Graph.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SiloTest", "SiloTest\SiloTest.csproj", "{11B39AF9-B503-4567-AE8C-8BF8851925BE}"

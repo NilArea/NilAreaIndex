@@ -21,17 +21,18 @@ import { reactive } from 'vue';
 import type { FormSubmitEvent } from '@nuxt/ui';
 
 const schema = v.object({
-  email: v.pipe(v.string(),v.email('Invalid email')),
+  email: v.pipe(v.string(), v.email('Invalid email')),
   password: v.pipe(v.string(), v.minLength(8, 'Must be at least 8 characters'))
 });
 type Schema = v.InferOutput<typeof schema>
 const state = reactive<LoginRequest>({
   email: '',
   password: ''
-})
+});
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   //toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
-  console.log(event.data)
+  console.log(event.data);
 }
 </script>
 
