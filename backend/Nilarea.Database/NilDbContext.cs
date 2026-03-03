@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using NilArea.Grains.Dbe;
+using Nilarea.Database.Dbe;
 using ShardingCore.Sharding;
 
-namespace NilArea.Grains.DbContext;
+namespace Nilarea.Database;
 
 public class
     NilDbContext(DbContextOptions<NilDbContext> options) : AbstractShardingDbContext(options)
@@ -17,6 +17,13 @@ public class
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyNilareaContractsConfig();
+        var ec = new AccountUserEntityConfig();
+        modelBuilder
+            .ApplyConfiguration<AccountUser>(ec)
+            .ApplyConfiguration<AccountGroup>(ec)
+            .ApplyConfiguration<AccountUserGroup>(ec)
+            .ApplyConfiguration<PermissionTag>(ec)
+            .ApplyConfiguration<UserPermission>(ec)
+            .ApplyConfiguration<GroupPermission>(ec);
     }
 }

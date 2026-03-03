@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using NilArea.Common.Utils;
 using NilArea.Contracts.Dto;
+using Nilarea.Database.Abstract.Services;
 using NilArea.Grains.Services;
 using NilArea.Interfaces.Exceptions;
 using NilArea.Interfaces.IGrains;

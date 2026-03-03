@@ -4,13 +4,14 @@ using Microsoft.Extensions.DependencyInjection;
 using NilArea.Common;
 using NilArea.Common.Utils;
 using NilArea.Contracts;
+using Nilarea.Database;
+using Nilarea.Database.Abstract.Services;
+using Nilarea.Database.Services;
 using NilArea.Grains;
-using NilArea.Grains.DbContext;
 using NilArea.Grains.Services;
 using NilArea.Interfaces;
 using ShardingCore;
 using ShardingCore.Core.ShardingConfigurations;
-using ShardingCore.Sharding.ReadWriteConfigurations;
 using StackExchange.Redis.Extensions.Core;
 using StackExchange.Redis.Extensions.Core.Abstractions;
 using StackExchange.Redis.Extensions.Core.Configuration;
@@ -42,24 +43,26 @@ public static class Configures
         public IServiceCollection AddNilareaDbContext(IConfiguration configuration)
         {
             collection.AddShardingDbContext<NilDbContext>()
+                .UseRouteConfig((sp, op) => op.ConfigureRoute(sp))
                 .UseConfig(ConfigDbContext)
                 .AddShardingCore();
             return collection;
 
             void ConfigDbContext(ShardingConfigOptions op)
             {
-                var sqlMaster = configuration.SafeGetConfigureValue("MYSQL_MASTER");
-                var sqlSlave = configuration.SafeGetConfigureValue("MYSQL_SLAVE");
-                const string ds0 = "ds0";
+                var sqlShard0 = configuration.SafeGetConfigureValue("MYSQL_SHARD0");
+                var sqlShard1 = configuration.SafeGetConfigureValue("MYSQL_SHARD1");
+                var sqlShard2 = configuration.SafeGetConfigureValue("MYSQL_SHARD2");
                 //如何通过字符串查询创建DbContext
                 op.UseShardingQuery((conStr, sqb) => { sqb.UseMySQL(conStr); });
                 //如何通过事务创建DbContext
                 op.UseShardingTransaction((conStr, stb) => { stb.UseMySQL(conStr); });
-                op.AddDefaultDataSource(ds0, sqlMaster);
-                op.AddReadWriteSeparation(_ => new Dictionary<string, IEnumerable<string>>
+                op.AddDefaultDataSource("ds0", sqlShard0);
+                op.AddExtraDataSource(_ => new Dictionary<string, string>
                 {
-                    { ds0, [sqlSlave] }
-                }, ReadStrategyEnum.Loop, ReadWriteDefaultEnableBehavior.DefaultEnable);
+                    { "ds1", sqlShard1 },
+                    { "ds2", sqlShard2 }
+                });
             }
         }
 

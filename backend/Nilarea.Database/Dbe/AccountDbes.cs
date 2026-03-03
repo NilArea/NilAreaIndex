@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace NilArea.Grains.Dbe;
+namespace Nilarea.Database.Dbe;
 
-public sealed class AccountUser
+public class AccountUser
 {
     /// <summary>
     ///     用户唯一ID
@@ -57,15 +57,15 @@ public sealed class AccountUser
     /// <summary>
     ///     用户所属组
     /// </summary>
-    public ICollection<AccountUserGroup> UserGroups { get; } = [];
+    public virtual ICollection<AccountUserGroup> UserGroups { get; } = [];
 
     /// <summary>
     ///     用户权限
     /// </summary>
-    public ICollection<UserPermission> Permissions { get; } = [];
+    public virtual ICollection<UserPermission> Permissions { get; } = [];
 }
 
-public sealed class AccountGroup
+public class AccountGroup
 {
     /// <summary>
     ///     组唯一ID
@@ -109,47 +109,47 @@ public sealed class AccountGroup
     /// <summary>
     ///     组用户
     /// </summary>
-    public ICollection<AccountUserGroup> UserGroups { get; } = [];
+    public virtual ICollection<AccountUserGroup> UserGroups { get; } = [];
 
     /// <summary>
     ///     组权限
     /// </summary>
-    public ICollection<GroupPermission> Permissions { get; } = [];
+    public virtual ICollection<GroupPermission> Permissions { get; } = [];
 }
 
-public sealed class AccountUserGroup
+public class AccountUserGroup
 {
     public required Guid UserId { get; init; }
     public required int GroupId { get; init; }
     [DataType("datetime(6)")] public DateTime JoinedAt { get; init; }
 
     // 导航属性
-    public AccountUser User { get; set; } = null!;
-    public AccountGroup Group { get; set; } = null!;
+    public virtual AccountUser User { get; set; } = null!;
+    public virtual AccountGroup Group { get; set; } = null!;
 }
 
-public sealed class PermissionTag
+public class PermissionTag
 {
     public required short PermissionId { get; init; }
     [MaxLength(100)] public required string PermissionName { get; init; }
-    public ICollection<UserPermission> UserPermissions { get; } = [];
-    public ICollection<GroupPermission> GroupPermissions { get; } = [];
+    public virtual ICollection<UserPermission> UserPermissions { get; } = [];
+    public virtual ICollection<GroupPermission> GroupPermissions { get; } = [];
 }
 
-public sealed class UserPermission
+public class UserPermission
 {
     public required Guid UserId { get; init; }
     public required short PermissionId { get; init; }
-    public AccountUser User { get; set; } = null!;
-    public PermissionTag Permission { get; set; } = null!;
+    public virtual AccountUser User { get; set; } = null!;
+    public virtual PermissionTag Permission { get; set; } = null!;
 }
 
-public sealed class GroupPermission
+public class GroupPermission
 {
     public required int GroupId { get; init; }
     public required short PermissionId { get; init; }
-    public AccountGroup Group { get; set; } = null!;
-    public PermissionTag Permission { get; set; } = null!;
+    public virtual AccountGroup Group { get; set; } = null!;
+    public virtual PermissionTag Permission { get; set; } = null!;
 }
 
 public class AccountUserEntityConfig :

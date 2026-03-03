@@ -1,0 +1,257 @@
+name: nilarea
+
+networks:
+  nilarea-cluster-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.27.0.0/16
+          gateway: 172.27.0.1
+
+volumes:
+  mysql-shard0-data:
+  mysql-shard1-data:
+  mysql-shard2-data:
+  redis-node0-data:
+  redis-node1-data:
+  redis-node2-data:
+  redis-node3-data:
+  redis-node4-data:
+  redis-node5-data:
+  os-node0-data:
+  os-node1-data:
+  os-node2-data:
+
+secrets:
+  mysql_root_password:
+    file: ./secrets/mysql_root_password
+  public_key:
+    file: ./secrets/cert.crt
+  private_key:
+    file: ./secrets/cert.key
+
+services:
+  mysql-shard0:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-mysql
+    container_name: mysql-shard0
+    secrets:
+      - mysql_root_password
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    volumes:
+      - ./configs/mysql/shard.cnf:/etc/mysql/my.cnf:ro
+      - mysql-shard0-data:/var/lib/mysql:rw
+      - ./configs/mysql/scripts:/docker-entrypoint-initdb.d
+    ports:
+      - 3300:3306
+  mysql-shard1:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-mysql
+    container_name: mysql-shard1
+    secrets:
+      - mysql_root_password
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    volumes:
+      - ./configs/mysql/shard.cnf:/etc/mysql/my.cnf:ro
+      - mysql-shard1-data:/var/lib/mysql:rw
+      - ./configs/mysql/scripts:/docker-entrypoint-initdb.d
+    ports:
+      - 3301:3306
+  mysql-shard2:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-mysql
+    container_name: mysql-shard2
+    secrets:
+      - mysql_root_password
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+    volumes:
+      - ./configs/mysql/shard.cnf:/etc/mysql/my.cnf:ro
+      - mysql-shard2-data:/var/lib/mysql:rw
+      - ./configs/mysql/scripts:/docker-entrypoint-initdb.d
+    ports:
+      - 3302:3306
+  redis-proxy:
+    image: envoyproxy/envoy:dev-d568d57938c13d36f46405290d6a2a5e2ceed710
+    ports:
+      - 6379:6379
+      - 8001:8001
+    volumes:
+      - ./configs/redis/envoy.yaml:/etc/envoy/envoy.yaml:ro
+    networks:
+      - nilarea-cluster-net
+    depends_on:
+      - redis-node0
+      - redis-node1
+      - redis-node2
+      - redis-node3
+      - redis-node4
+      - redis-node5
+  redis-node0:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-redis
+    container_name: redis-node0
+    volumes:
+      - redis-node0-data:/data
+      - ./configs/redis/redis-node.cnf:/etc/redis/redis.conf:ro
+    command: [ "redis-server", "/etc/redis/redis.conf" ]
+    networks:
+      nilarea-cluster-net:
+        ipv4_address: 172.27.0.90
+  redis-node1:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-redis
+    container_name: redis-node1
+    volumes:
+      - redis-node1-data:/data
+      - ./configs/redis/redis-node.cnf:/etc/redis/redis.conf:ro
+    command: [ "redis-server", "/etc/redis/redis.conf" ]
+    networks:
+      nilarea-cluster-net:
+        ipv4_address: 172.27.0.91
+  redis-node2:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-redis
+    container_name: redis-node2
+    volumes:
+      - redis-node2-data:/data
+      - ./configs/redis/redis-node.cnf:/etc/redis/redis.conf:ro
+    command: [ "redis-server", "/etc/redis/redis.conf" ]
+    networks:
+      nilarea-cluster-net:
+        ipv4_address: 172.27.0.92
+  redis-node3:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-redis
+    container_name: redis-node3
+    volumes:
+      - redis-node3-data:/data
+      - ./configs/redis/redis-node.cnf:/etc/redis/redis.conf:ro
+    command: [ "redis-server", "/etc/redis/redis.conf" ]
+    networks:
+      nilarea-cluster-net:
+        ipv4_address: 172.27.0.93
+  redis-node4:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-redis
+    container_name: redis-node4
+    volumes:
+      - redis-node4-data:/data
+      - ./configs/redis/redis-node.cnf:/etc/redis/redis.conf:ro
+    command: [ "redis-server", "/etc/redis/redis.conf" ]
+    networks:
+      nilarea-cluster-net:
+        ipv4_address: 172.27.0.94
+  redis-node5:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-redis
+    container_name: redis-node5
+    volumes:
+      - redis-node5-data:/data
+      - ./configs/redis/redis-node.cnf:/etc/redis/redis.conf:ro
+    command: [ "redis-server", "/etc/redis/redis.conf" ]
+    networks:
+      nilarea-cluster-net:
+        ipv4_address: 172.27.0.95
+  nginx:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-nginx
+    secrets:
+      - public_key
+      - private_key
+    container_name: nilarea-nginx
+    volumes:
+      - ./configs/nginx/opensearch.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 9200:9200
+      - 5601:5601
+    networks:
+      - nilarea-cluster-net
+    depends_on:
+      - os-coord0
+      - os-dashboard
+  os-dashboard:
+    extends:
+      file: docker-compose.base.yaml
+      service: opensearch-dashboard
+    container_name: os-dashboard
+    environment:
+      OPENSEARCH_HOSTS: ["https://os-coord0:9200"]
+      opensearch.password: ${INITIAL_ADMIN_PASSWORD}
+    networks:
+      - nilarea-cluster-net
+    depends_on:
+      - os-coord0
+  os-coord0:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-opensearch
+    container_name: os-coord0
+    environment:
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_ADMIN_PADDWORD}
+      node.name: os-coord0
+      node.roles: "[]"
+      discovery.seed_hosts: os-master0,os-master1,os-master2
+    networks:
+      - nilarea-cluster-net
+    depends_on:
+      - os-node0
+      - os-node1
+      - os-node2
+  os-node0:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-opensearch
+    container_name: os-master0
+    environment:
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_ADMIN_PADDWORD}
+      node.name: os-master0
+      node.roles: cluster_manager,data,ingest
+      discovery.seed_hosts: os-master1,os-master2
+      cluster.initial_cluster_manager_nodes: os-master0,os-master1,os-master2
+    volumes:
+      - os-node0-data:/usr/share/opensearch/data
+    networks:
+      - nilarea-cluster-net
+  os-node1:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-opensearch
+    container_name: os-master1
+    environment:
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_ADMIN_PADDWORD}
+      node.name: os-master1
+      node.roles: cluster_manager,data,ingest
+      discovery.seed_hosts: os-master0,os-master2
+      cluster.initial_cluster_manager_nodes: os-master0,os-master1,os-master2
+    volumes:
+      - os-node1-data:/usr/share/opensearch/data
+    networks:
+      - nilarea-cluster-net
+  os-node2:
+    extends:
+      file: docker-compose.base.yaml
+      service: x-opensearch
+    container_name: os-master2
+    environment:
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_ADMIN_PADDWORD}
+      node.name: os-master2
+      node.roles: cluster_manager,data,ingest
+      discovery.seed_hosts: os-master0,os-master1
+      cluster.initial_cluster_manager_nodes: os-master0,os-master1,os-master2
+    volumes:
+      - os-node2-data:/usr/share/opensearch/data
+    networks:
+      - nilarea-cluster-net

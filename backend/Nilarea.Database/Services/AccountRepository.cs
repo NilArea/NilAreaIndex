@@ -1,37 +1,18 @@
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
-using NilArea.Common.Services;
 using NilArea.Common.Utils;
 using NilArea.Contracts;
 using NilArea.Contracts.Dto;
-using NilArea.Grains.DbContext;
-using NilArea.Grains.Dbe;
+using Nilarea.Database.Abstract.Dto;
+using Nilarea.Database.Abstract.Services;
+using Nilarea.Database.Dbe;
 using NilArea.Interfaces.Exceptions;
 using NilArea.Interfaces.IGrains;
 using StackExchange.Redis;
 using StackExchange.Redis.Extensions.Core.Abstractions;
 
-namespace NilArea.Grains.Services;
-
-public interface IAccountRepository : IAsyncLifetime
-{
-    ValueTask<bool> ExistsAccountAsync(string email);
-    ValueTask CacheConfirmKeyAsync(string email, string key, ConfirmKey keyCode);
-    ValueTask<bool> CheckConfirmKeyAsync(string email, string key);
-    ValueTask<AccountUser> InsertAccountAsync(string email, string passwordHash, string username);
-    ValueTask<AccountUser> FindAccountAsync(Guid uid);
-    ValueTask<AccountUser> FindAccountAsync(string email);
-    ValueTask<T> FindAccountAsync<T>(Guid uid, Expression<Func<AccountUser, T>> select);
-    ValueTask<T> FindAccountAsync<T>(string email, Expression<Func<AccountUser, T>> select);
-
-    ValueTask<T[]> FindAccountsAsync<T>(Expression<Func<AccountUser, bool>> filter,
-        Expression<Func<AccountUser, T>> select);
-
-    ValueTask<TokenPair> GenerateTokenAsync(Guid userId, bool overwrite = true);
-    ValueTask<PermissionTag[]> GetAllPermissionAsync(Guid userId);
-}
+namespace Nilarea.Database.Services;
 
 public sealed class AccountRepository(
     ILogger<AccountRepository> logger,
@@ -76,7 +57,7 @@ public sealed class AccountRepository(
         return !c.IsNull && string.Equals(c, key);
     }
 
-    public async ValueTask<AccountUser> InsertAccountAsync(string email, string passwordHash, string username)
+    public async ValueTask<AccountUserInfo> InsertAccountAsync(string email, string passwordHash, string username)
     {
         if (await ExistsAccountAsync(email))
             throw new AccountException("Email already registered", AccountAction.Register);
@@ -107,58 +88,47 @@ public sealed class AccountRepository(
             throw new AccountException("Account already exists.", AccountAction.Register);
         }
 
-        return add;
+        return new AccountUserInfo(uid, email, username, add.CreatedAt, [StaticValues.AccountSystemGroupNames.Users]);
     }
 
-    public async ValueTask<AccountUser> FindAccountAsync(Guid uid)
+    public async ValueTask<AccountUserInfo> FindAccountAsync(Guid uid)
     {
-        var account = await dbContext.AccountUsers
-            .FirstOrDefaultAsync(au => au.UserId == uid);
-        if (account is null || account.DeleteAt != null)
+        var account = await dbContext.AccountUsers.AsNoTracking()
+            .Where(au => au.UserId == uid && au.DeleteAt == null)
+            .Select(au => new AccountUserInfo(au.UserId, au.Email, au.UserName, au.CreatedAt,
+                au.UserGroups.Select(ug => ug.Group.GroupName)))
+            .FirstOrDefaultAsync();
+        if (account is null)
             throw new AuthenticationException("Account not available");
         return account;
     }
 
-    public async ValueTask<AccountUser> FindAccountAsync(string email)
+    public async ValueTask<AccountUserInfo> FindAccountAsync(string email)
     {
-        var account = await dbContext.AccountUsers
-            .FirstOrDefaultAsync(au => au.Email == email && au.DeleteAt == null);
+        var account = await dbContext.AccountUsers.AsNoTracking()
+            .Where(au => au.Email == email && au.DeleteAt == null)
+            .Select(au => new AccountUserInfo(au.UserId, au.Email, au.UserName, au.CreatedAt,
+                au.UserGroups.Select(ug => ug.Group.GroupName)))
+            .FirstOrDefaultAsync();
         if (account is null)
             throw new AuthenticationException("Email does not registered");
         return account;
     }
 
-    public async ValueTask<T> FindAccountAsync<T>(Guid uid, Expression<Func<AccountUser, T>> select)
+    public async ValueTask<(Guid UserId, string PasswordSaltHash)> GetAccountVerifyKeyAsync(string email)
     {
-        if (await dbContext.AccountUsers
-                .AnyAsync(au => (au.UserId == uid) & (au.DeleteAt == null)))
-            throw new AuthenticationException("Account not available");
-        return await dbContext.AccountUsers
-            .Where(au => (au.UserId == uid) & (au.DeleteAt == null))
-            .Select(select)
-            .FirstAsync();
-    }
-
-    public async ValueTask<T> FindAccountAsync<T>(string email, Expression<Func<AccountUser, T>> select)
-    {
-        if (!await dbContext.AccountUsers.AnyAsync(au => au.Email == email && au.DeleteAt == null))
-            throw new AuthenticationException("Email does not registered");
-        return await dbContext.AccountUsers
+        var up = await dbContext.AccountUsers.AsNoTracking()
             .Where(au => au.Email == email && au.DeleteAt == null)
-            .Select(select)
-            .FirstAsync();
-    }
-
-    public async ValueTask<T[]> FindAccountsAsync<T>(
-        Expression<Func<AccountUser, bool>> filter,
-        Expression<Func<AccountUser, T>> select)
-    {
-        return await dbContext.AccountUsers.Where(filter).Select(select).ToArrayAsync();
+            .Select(au => new { au.UserId, au.PasswordSaltHash })
+            .FirstOrDefaultAsync() ?? throw new AuthenticationException("Email does not registered");
+        return (up.UserId, up.PasswordSaltHash);
     }
 
     public async ValueTask<TokenPair> GenerateTokenAsync(Guid userId, bool overwrite = true)
     {
-        var user = await dbContext.AccountUsers.FirstAsync(u => u.UserId == userId);
+        var user = await dbContext.AccountUsers.Where(au => au.UserId == userId && au.DeleteAt == null)
+            .Select(u => new { u.UserId, u.CreatedAt })
+            .FirstOrDefaultAsync();
         return new TokenPair
         {
             AccessToken = string.Empty,
@@ -168,18 +138,23 @@ public sealed class AccountRepository(
         };
     }
 
-    public async ValueTask<PermissionTag[]> GetAllPermissionAsync(Guid userId)
+    public async ValueTask<PermissionTagInfo[]> GetAllPermissionAsync(Guid userId)
     {
-        var user = dbContext.AccountUsers
+        var user = dbContext.AccountUsers.AsNoTracking()
             .Where(u => u.UserId == userId && u.DeleteAt == null);
         if (!await user.AnyAsync()) throw new AccountException("Account not available");
-        var permissions = await user.SelectMany(u => u.Permissions
-                .Select(up => up.Permission))
-            .Union(user.SelectMany(u => u.UserGroups)
-                .SelectMany(ug => ug.Group.Permissions
-                    .Select(gp => gp.Permission)))
+        var permissions = await user.SelectMany(au =>
+                au.Permissions.Select(ups => ups.Permission)
+                    .Select(up => new { up.PermissionId, up.PermissionName }))
+            .Union(user.SelectMany(au => au.UserGroups)
+                .SelectMany(aug => aug.Group.Permissions)
+                .Select(gp => gp.Permission)
+                .Select(gp => new { gp.PermissionId, gp.PermissionName }))
             .ToArrayAsync();
-        return permissions.DistinctBy(p => p.PermissionId).ToArray();
+        return permissions
+            .DistinctBy(p => p.PermissionId)
+            .Select(p => new PermissionTagInfo(p.PermissionId, p.PermissionName))
+            .ToArray();
     }
 
     public async Task InitializeAsync()
@@ -200,7 +175,8 @@ public sealed class AccountRepository(
                 .Where(g => g.IsSystemGroup == true)
                 .Select(g => new { g.GroupName, g.GroupId })
                 .ToDictionaryAsync(g => g.GroupName, g => g.GroupId);
-            logger.LogInformation("Successful Create SystemGroupMap 'SystemGroupMap'");
+            logger.LogInformation("Successful Create SystemGroupMap 'SystemGroupMap' With {Count} Groups.",
+                SystemGroupMap.Count);
         }
         catch (Exception ex)
         {

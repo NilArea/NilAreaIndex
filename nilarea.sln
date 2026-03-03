@@ -19,7 +19,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solotion Items", "Solotion 
 		Graph.md = Graph.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SiloTest", "SiloTest\SiloTest.csproj", "{11B39AF9-B503-4567-AE8C-8BF8851925BE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nilarea.Database.Abstract", "backend\shared-libs\Nilarea.Database.Abstract\Nilarea.Database.Abstract.csproj", "{5FB8BF40-B9AA-4BEB-808E-F7606CF1850F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nilarea.Database", "backend\Nilarea.Database\Nilarea.Database.csproj", "{5ABF83E9-6119-45F3-B8C9-2FF5C0992B06}"
 EndProject
 Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
@@ -47,15 +49,20 @@ Global
 		{EA9AEF76-1734-4045-849E-34C6B38E3A4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA9AEF76-1734-4045-849E-34C6B38E3A4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA9AEF76-1734-4045-849E-34C6B38E3A4D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{11B39AF9-B503-4567-AE8C-8BF8851925BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{11B39AF9-B503-4567-AE8C-8BF8851925BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{11B39AF9-B503-4567-AE8C-8BF8851925BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{11B39AF9-B503-4567-AE8C-8BF8851925BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FB8BF40-B9AA-4BEB-808E-F7606CF1850F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FB8BF40-B9AA-4BEB-808E-F7606CF1850F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FB8BF40-B9AA-4BEB-808E-F7606CF1850F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FB8BF40-B9AA-4BEB-808E-F7606CF1850F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5ABF83E9-6119-45F3-B8C9-2FF5C0992B06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ABF83E9-6119-45F3-B8C9-2FF5C0992B06}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ABF83E9-6119-45F3-B8C9-2FF5C0992B06}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ABF83E9-6119-45F3-B8C9-2FF5C0992B06}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{3675EC56-65AD-4A88-B022-845D642B3AE5} = {497B1FA8-F761-484F-941F-4ABF56FAF6F8}
 		{E804AD23-C631-4789-885B-B89B09BF64D5} = {497B1FA8-F761-484F-941F-4ABF56FAF6F8}
 		{A616AB00-2DEB-4DD1-AEB5-5A5D3A084E34} = {497B1FA8-F761-484F-941F-4ABF56FAF6F8}
+		{5FB8BF40-B9AA-4BEB-808E-F7606CF1850F} = {497B1FA8-F761-484F-941F-4ABF56FAF6F8}
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -23,4 +23,3 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Nilarea.Silo.dll"]
-ENV a=a

@@ -31,6 +31,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Nilarea.Database\Nilarea.Database.csproj"/>
         <ProjectReference Include="..\Nilarea.Grains\Nilarea.Grains.csproj"/>
     </ItemGroup>
 

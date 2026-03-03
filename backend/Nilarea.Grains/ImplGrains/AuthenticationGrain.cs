@@ -2,7 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.Logging;
 using NilArea.Common.Utils;
 using NilArea.Contracts.Dto;
-using NilArea.Grains.Services;
+using Nilarea.Database.Abstract.Services;
 using NilArea.Interfaces.Exceptions;
 using NilArea.Interfaces.IGrains;
 using Orleans.Concurrency;
@@ -26,7 +26,7 @@ public sealed class AuthenticationGrain(
         if (!await accountRepository.ExistsAccountAsync(request.Email))
             throw new AuthenticationException("Email is not registered", AuthenticationResult.Failed);
         var add = await accountRepository
-            .FindAccountAsync(request.Email, au => new { au.UserId, au.PasswordSaltHash });
+            .GetAccountVerifyKeyAsync(request.Email);
         if (!passwordHasher.Verify(request.Password, add.PasswordSaltHash))
             throw new AuthenticationException("Password does not match", AuthenticationResult.Failed);
         var token = await accountRepository.GenerateTokenAsync(add.UserId);
