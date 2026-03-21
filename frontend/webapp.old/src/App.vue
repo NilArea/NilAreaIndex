@@ -7,6 +7,7 @@
         </transition>
       </router-view>
     </main>
+    <NuxtPage/>
     <FooterComponent v-if="showFooter" />
   </UApp>
 </template>

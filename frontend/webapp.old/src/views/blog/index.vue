@@ -11,7 +11,7 @@
       <div id="nav-link-container">
         <router-link class="nav-link" to="/">首页</router-link>
         <router-link class="nav-link" to="/blog">博客</router-link>
-        <account-icon-component v-if="false" />
+        <account-icon-component v-if="isLogedIn" />
         <router-link v-else class="nav-link" to="/sign">登录</router-link>
       </div>
     </div>
@@ -20,37 +20,117 @@
       :class="{ loaded: isBgLoaded}"
     ></div>
     <div id="spacer"></div>
-    <section id="graph-1" nav-trigger>
-      <blog-item-component />
-    </section>
-    <section id="graph-2">
-      <blog-item-component />
-    </section>
-    <section id="graph-3">
-      <blog-item-component />
-    </section>
+    <div
+      id="graph-1"
+      ref="navTriggerRef"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h3 class="text-center mb-12">最新文章</h3>
+        <!-- 加载中 -->
+        <div v-if="pending" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <USkeleton v-for="i in 6" :key="i" class="h-80" />
+        </div>
+        <!-- 博客卡片网格 -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+          <BlogItemComponent
+            v-for="post in blogPosts"
+            :key="post.slug"
+            :title="post.title"
+            :excerpt="post.excerpt"
+            :date="post.date"
+            :slug="post.slug"
+            :cover="post.cover"
+            :tags="post.tags"
+          />
+        </div>
+        <!-- 加载更多 -->
+        <div class="mt-12 text-center">
+          <UButton
+            v-if="hasMore"
+            color="gray"
+            variant="soft"
+            size="lg"
+            :loading="loadingMore"
+            @click="loadMore"
+          >
+            加载更多
+          </UButton>
+        </div>
+      </div>
+    </div>
+    <div id="graph-2">
+      <div class="max-w-7xl mx-auto px-4 text-center">
+        <h3>关于</h3>
+        <div class="about-content max-w-2xl mx-auto leading-relaxed">
+          这里是关于部分的描述内容...
+        </div>
+      </div>
+    </div>
+    <div id="graph-3">
+      <div class="max-w-7xl mx-auto px-4 text-center">
+        <h3>标签</h3>
+        <div class="tags-container">
+          <span v-for="tag in ['Vue', 'Nuxt', 'TypeScript', 'CSS']" :key="tag">
+            {{ tag }}
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
+import useFetch from '@nuxt/ui';
 import { onMounted, onUnmounted, ref } from 'vue';
 import BlogItemComponent from './BlogItemComponent.vue';
 import AccountIconComponent from '../AccountIconComponent.vue';
 
+// 导航相关状态
 const isNavSticky = ref(false);
 const isBgLoaded = ref(false);
 const scrolling = ref(false);
+const isLogedIn = ref(false);
 
 const navBarRef = ref<HTMLElement | null>(null);
 const navTriggerRef = ref<HTMLElement | null>(null);
+// 博客数据
+const page = ref(1);
+const hasMore = ref(true);
+const loadingMore = ref(false);
 
+const { data: blogPosts, pending } = await useFetch('/api/posts', {
+  default: () => ([
+    {
+      slug: 'nuxt-3-guide',
+      title: 'Nuxt 3 完全指南',
+      excerpt: '深入了解 Nuxt 3 的自动导入、渲染模式和服务器引擎...',
+      date: '2026-03-20',
+      cover: '/images/blog-1.jpg',
+      tags: ['Nuxt', 'Vue']
+    },
+    {
+      slug: 'typescript-tips',
+      title: 'TypeScript 高级技巧',
+      excerpt: '类型推断、泛型和类型守卫的最佳实践...',
+      date: '2026-03-18',
+      cover: '/images/blog-2.jpg',
+      tags: ['TypeScript']
+    },
+    {
+      slug: 'css-modern',
+      title: '现代 CSS 特性一览',
+      excerpt: '探索 Container Queries、:has() 选择器等新特性...',
+      date: '2026-03-15',
+      tags: ['CSS']
+    }
+  ])
+});
+
+// 滚动检测逻辑
 const checkSticky = () => {
   if (!navTriggerRef.value) return;
-
   const targetRect = navTriggerRef.value.getBoundingClientRect();
-
   isNavSticky.value = targetRect.top <= 0;
-
   scrolling.value = false;
 };
 
@@ -66,6 +146,14 @@ const init = () => {
     isBgLoaded.value = true;
   }, 100);
   checkSticky();
+};
+
+const loadMore = async () => {
+  loadingMore.value = true;
+  page.value++;
+  // 这里添加实际的数据获取逻辑
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  loadingMore.value = false;
 };
 
 onMounted(() => {
@@ -313,6 +401,18 @@ h5 {
 
 #graph-1, #graph-3 {
   background-color: var(--bg-w-245)
+}
+
+:deep(.blog-card) {
+  background: var(--bg-w-pure);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+
+:deep(.blog-card:hover) {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 .tags-container {
