@@ -33,12 +33,13 @@ public class ApiAuthController(
     private static RedisKey BfAccount => StaticValues.BfAccount;
 
     [AllowAnonymous]
-    [HttpPost("register/confirm")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [HttpPost("register/callconfirm")]
     public async Task<IActionResult> RegisterConfirm([FromQuery] string email)
     {
         await EmailValidator.ValidateAndThrowAsync(email);
         var ag = clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
-        await ag.CallConfirmKey(email, ConfirmKey.Register);
+        await ag.CallConfirmKey(email, ConfirmType.Initial);
         return NoContent();
     }
 
@@ -49,8 +50,8 @@ public class ApiAuthController(
     /// <returns>注册结果</returns>
     [AllowAnonymous]
     [HttpPost("register")]
-    [ProducesResponseType(typeof(AccountRegisterResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(AccountRegisterResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> Register([FromBody] AccountRegisterRequest request)
     {
         await registerRequestValidator.ValidateAndThrowAsync(request);
@@ -68,7 +69,7 @@ public class ApiAuthController(
     [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(typeof(AccountLoginResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(AccountLoginResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] AccountLoginRequest request)
     {
         var validate = await loginRequestValidator.ValidateAsync(request);

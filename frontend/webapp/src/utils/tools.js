@@ -31,3 +31,7 @@ export function randomString() {
 export function removeTag(fragment) {
   return new DOMParser().parseFromString(fragment, 'text/html').body.textContent || '';
 }
+
+export function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

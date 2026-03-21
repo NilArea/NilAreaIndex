@@ -1,5 +1,5 @@
 <template>
-  <div id="app-container">
+  <UApp>
     <main>
       <router-view v-slot="{ Component }">
         <transition mode="out-in" name="fade">
@@ -8,13 +8,13 @@
       </router-view>
     </main>
     <FooterComponent v-if="showFooter" />
-  </div>
+  </UApp>
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { FooterComponent } from './components';
+import FooterComponent from './views/FooterComponent.vue';
 
 const route = useRoute();
 

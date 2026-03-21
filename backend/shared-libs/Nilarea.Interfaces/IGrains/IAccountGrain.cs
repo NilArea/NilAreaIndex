@@ -21,7 +21,7 @@ public interface IAccountGrain : IGrainWithGuidKey
     ///     通知发送验证码
     /// </summary>
     [Alias("CallConfirmKey")]
-    ValueTask CallConfirmKey(string email, ConfirmKey keyCode = ConfirmKey.Default);
+    ValueTask CallConfirmKey(string email, ConfirmType typeCode = ConfirmType.Default);
 
     /// <summary>
     ///     注册账号
@@ -39,13 +39,20 @@ public interface IAccountGrain : IGrainWithGuidKey
     ///     修改i密码
     /// </summary>
     [Alias("ChangePasswd")]
-    ValueTask ChangePasswd(ChangePasswdRequest request);
+    ValueTask ChangePassword(ChangePasswdRequest request);
 }
 
-public enum ConfirmKey
+/// <summary>
+///     验证码作用类型<br />
+///     <see cref="Default" />默认类型或其他类型<br />
+///     <see cref="Initial" />初始化操作<br />
+///     <see cref="Reversible" />可逆操作<br />
+///     <see cref="Irreversible" />不可逆操作<br />
+/// </summary>
+public enum ConfirmType
 {
     Default,
-    Register,
-    ChangePasswd,
-    DeleteAccount
+    Initial,
+    Reversible,
+    Irreversible
 }

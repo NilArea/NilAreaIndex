@@ -5,30 +5,41 @@
       :class="{ loaded: isBgLoaded}"
     />
     <div id="sign-container">
-      <UCard>
-        <template #header>
-          <button>aa</button>
-        </template>
-        <template #footer>
-          <button>aa</button>
-        </template>
+      <Transition
+        mode="out-in"
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="opacity-0 translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 -translate-y-2"
+      >
         <SignIn
-          v-if="isSignIn"
+          v-if="isLogin"
+          @switch="isLogin = false"
+          @success="handleAuth"
         />
         <SignUp
           v-else
+          @switch="isLogin = true"
+          @success="handleAuth"
         />
-      </UCard>
+      </Transition>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
-import { SignIn, SignUp } from '../../components/Sign';
+import SignIn from './SignIn.vue';
+import SignUp from './SignUp.vue';
 
 const isBgLoaded = ref(false);
-const isSignIn = ref(true);
+const isLogin = ref(true);
+
+const handleAuth = () =>{
+  location.href = '/blog';
+}
 
 const init = () => {
   setTimeout(() => {
@@ -65,15 +76,9 @@ onMounted(() => {
   width: 100%;
   height: 100vh;
   display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   overflow: auto;
-}
-
-.sign-card {
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-  padding: 16px;
 }
 </style>

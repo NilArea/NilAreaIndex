@@ -39,14 +39,18 @@ public class AccountGrain(
         return await accountRepository.ExistsAccountAsync(email);
     }
 
-    public async ValueTask CallConfirmKey(string email, ConfirmKey keyCode = ConfirmKey.Default)
+    public async ValueTask CallConfirmKey(string email, ConfirmType typeCode = ConfirmType.Default)
     {
         var validate = await EmailValidator.ValidateAsync(email);
-        if (!validate.IsValid)
-            throw new AccountException(validate.ToString());
-        var confirmKey = Random.Shared.GetHexString(6);
-        await accountRepository.CacheConfirmKeyAsync(email, confirmKey, keyCode);
-        await emailServices.SendConfirmKeyAsync(email, confirmKey, keyCode);
+        if (!validate.IsValid) throw new AccountException(validate.ToString());
+        var confirmCode = Random.Shared.GetHexString(6);
+        if (!await accountRepository.CacheConfirmCodeAsync(email, confirmCode, typeCode))
+            throw new AccountException("Failed to cache confirm code");
+        if (!await emailServices.SendConfirmKeyAsync(email, confirmCode, typeCode))
+        {
+            await accountRepository.CheckConfirmCodeAsync(email, confirmCode);
+            throw new AccountException("Failed to send confirm key");
+        }
     }
 
     public async ValueTask<AccountRegisterResponse> RegisterUserAsync(AccountRegisterRequest request)
@@ -56,8 +60,8 @@ public class AccountGrain(
             throw new AccountException(validate.ToString(), AccountAction.Register);
         if (await accountRepository.ExistsAccountAsync(request.Email))
             throw new AccountException("Email already registered", AccountAction.Register);
-        if (!await accountRepository.CheckConfirmKeyAsync(request.Email, request.ConfirmKey))
-            throw new AccountException("Confirm key not valid", AccountAction.Register);
+        if (!await accountRepository.CheckConfirmCodeAsync(request.Email, request.ConfirmCode))
+            throw new AccountException("Confirm Code is invalid", AccountAction.Register);
         var add = await accountRepository.InsertAccountAsync(
             request.Email,
             passwordHasher.SaltedHash(request.Password),
@@ -76,7 +80,7 @@ public class AccountGrain(
         throw new NotImplementedException();
     }
 
-    public async ValueTask ChangePasswd(ChangePasswdRequest request)
+    public async ValueTask ChangePassword(ChangePasswdRequest request)
     {
         throw new NotImplementedException();
     }

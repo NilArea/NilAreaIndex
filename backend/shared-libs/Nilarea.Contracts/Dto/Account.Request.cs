@@ -30,5 +30,5 @@ public class AccountRegisterRequest
     [Id(0)] public required string Email { get; set; }
     [Id(1)] public required string Password { get; set; }
     [Id(2)] public required string Username { get; set; }
-    [Id(3)] public required string ConfirmKey { get; set; }
+    [Id(3)] public required string ConfirmCode { get; set; }
 }

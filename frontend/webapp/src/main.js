@@ -7,20 +7,28 @@ import App from './App.vue';
 import ui from '@nuxt/ui/vue-plugin';
 
 const defaultTitle = 'ツ箫声断丶何处莫凭栏 | 浅析';
+router.addRoute({
+  path: '/*',
+  redirect: '/error',
+})
 router.beforeEach((to, _from, next) => {
-  if (!to.meta.requireAdmin) {
-    document.title = to.meta.title ? `${to.meta.title}` : defaultTitle;
-    next();
-    return;
+  document.title = to.meta.title ? `${to.meta.title}` : defaultTitle;
+  if (to.meta.requireAdmin) {
+    const user = store.state.user;
+    if (user && user.role === 'admin') {
+      next();
+    } else{
+      next('/error');
+    }
   }
-  const user = store.state.user;
-  if (user && user.role === 'admin') {
-    document.title = to.meta.title ? `${to.meta.title}` : defaultTitle;
+  if (to.matched.length === 0 && to.path !== '/error') {
+    next('/error');
+  } else {
     next();
-  } else
-    next({ name: _from.name });
-
+  }
 });
+
+
 
 const app = createApp(App);
 app.use(router);

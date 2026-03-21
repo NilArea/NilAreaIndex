@@ -34,7 +34,8 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref } from 'vue';
-import { AccountIconComponent, BlogItemComponent } from '../../components';
+import BlogItemComponent from './BlogItemComponent.vue';
+import AccountIconComponent from '../AccountIconComponent.vue';
 
 const isNavSticky = ref(false);
 const isBgLoaded = ref(false);

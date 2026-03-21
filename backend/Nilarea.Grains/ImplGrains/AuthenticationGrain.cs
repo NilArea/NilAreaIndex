@@ -26,7 +26,7 @@ public sealed class AuthenticationGrain(
         if (!await accountRepository.ExistsAccountAsync(request.Email))
             throw new AuthenticationException("Email is not registered", AuthenticationResult.Failed);
         var add = await accountRepository
-            .GetAccountVerifyKeyAsync(request.Email);
+            .GetAccountVerifyAsync(request.Email);
         if (!passwordHasher.Verify(request.Password, add.PasswordSaltHash))
             throw new AuthenticationException("Password does not match", AuthenticationResult.Failed);
         var token = await accountRepository.GenerateTokenAsync(add.UserId);

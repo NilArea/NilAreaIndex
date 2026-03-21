@@ -13,9 +13,10 @@ public static class Helpers
 {
     extension(IEmailServices emailServices)
     {
-        public async ValueTask SendConfirmKeyAsync(string targetEmail, string confirmKey, ConfirmKey keyType)
+        public async ValueTask<bool> SendConfirmKeyAsync(string targetEmail, string confirmKey, ConfirmType typeType)
         {
             //TODO 发送邮件
+            return true;
         }
     }
 }
