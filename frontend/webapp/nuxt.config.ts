@@ -17,6 +17,10 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-01-15',
 
+  app: {
+    baseURL: '/NilAreaIndex/'
+  },
+
   eslint: {
     config: {
       stylistic: {
