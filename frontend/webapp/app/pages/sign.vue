@@ -23,8 +23,10 @@
 </template>
 
 <script setup lang="ts">
+import CityBg from '~/assets/img/city-bg.png'
+
 definePageMeta({
-  backgroundImage: '/images/city-bg.png',
+  backgroundImage: CityBg,
   hideFooter: true
 })
 </script>

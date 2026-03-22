@@ -9,6 +9,10 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  app: {
+    baseURL: '/NilAreaIndex/'
+  },
+
   css: ['~/assets/css/main.css'],
 
   routeRules: {
@@ -16,10 +20,6 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2025-01-15',
-
-  app: {
-    baseURL: '/NilAreaIndex/'
-  },
 
   eslint: {
     config: {

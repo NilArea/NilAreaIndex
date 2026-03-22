@@ -3,7 +3,9 @@
 </template>
 
 <script setup lang="ts">
+import FufuBg from '~/assets/img/fufu-bg.png'
+
 definePageMeta({
-  backgroundImage: '/images/fufu-bg.png'
+  backgroundImage: FufuBg
 })
 </script>
