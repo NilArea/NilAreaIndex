@@ -9,10 +9,6 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  app: {
-    baseURL: '/NilAreaIndex/'
-  },
-
   css: ['~/assets/css/main.css'],
 
   routeRules: {
