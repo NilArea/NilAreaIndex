@@ -1,9 +1,11 @@
 {
   "name": "webapp",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "nuxt build",
+    "generate": "nuxt generate",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -23,6 +25,5 @@
     "eslint": "^10.0.3",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.2.5"
-  },
-  "packageManager": "pnpm@10.32.1"
+  }
 }
