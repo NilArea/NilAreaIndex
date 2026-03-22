@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import CityBg from '~/assets/img/city-bg.png'
+import CityBg from '~~/public/img/city-bg.png'
 
 definePageMeta({
   backgroundImage: CityBg,

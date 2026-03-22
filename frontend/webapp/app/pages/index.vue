@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import ShopBg from '~/assets/img/shop-bg.png'
+import ShopBg from '~~/public/img/shop-bg.png'
 
 definePageMeta({
   backgroundImage: ShopBg
