@@ -44,7 +44,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "v22.22.1"
           cache: ${{ steps.detect-package-manager.outputs.manager }}
           cache-dependency-path: frontend/webapp/package-lock.json  # 指定依赖文件位置
 
