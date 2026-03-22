@@ -16,7 +16,6 @@
 
 <script setup lang="ts">
 import NilAreaFooter from '~/components/NilAreaFooter.vue'
-import NilareaIco from '~~/public/nilarea.ico'
 
 const title = 'ツ箫声断丶何处莫凭栏 | 浅析'
 const description = '这里是浅析的个人网页'
@@ -25,7 +24,7 @@ useHead({
     { name: 'viewport', content: 'width=device-width, initial-scale=1' }
   ],
   link: [
-    { rel: 'icon', href: NilareaIco }
+    { rel: 'icon', href: '/nilarea.ico' }
   ],
   htmlAttrs: {
     lang: 'zh-CN'

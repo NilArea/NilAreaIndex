@@ -5,9 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import ShopBg from '~~/public/img/shop-bg.png'
-
 definePageMeta({
-  backgroundImage: ShopBg
+  backgroundImage: '/img/shop-bg.png'
 })
 </script>
