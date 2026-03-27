@@ -1,50 +1,15 @@
 <template>
-  <UCard>
-    <template #header>
-      <h3 class="text-xl font-semibold text-center">
-        欢迎回来
-      </h3>
+  <UPageCard>
+    <template #body>
+      <UAuthForm
+        :schema="schema"
+        title="登录"
+        description="输入您的凭据以访问您的帐户"
+        icon="i-lucide-user"
+        :fields="fields"
+        @submit="onSubmit"
+      />
     </template>
-    <UForm
-      :schema="schema"
-      :state="state"
-      class="space-y-4"
-      @submit="onSubmit"
-    >
-      <UFormField
-        label="邮箱"
-        name="email"
-      >
-        <UInput
-          v-model="state.email"
-          type="email"
-          placeholder="your@email.com"
-          icon="i-heroicons-envelope"
-          required
-        />
-      </UFormField>
-      <UFormField
-        label="密码"
-        name="password"
-      >
-        <UInput
-          v-model="state.password"
-          type="password"
-          placeholder="••••••••"
-          icon="i-heroicons-lock-closed"
-          required
-        />
-      </UFormField>
-      <UButton
-        type="submit"
-        color="primary"
-        block
-        :loading="loading"
-        size="lg"
-      >
-        登录
-      </UButton>
-    </UForm>
     <template #footer>
       <p class="text-sm text-center text-gray-500">
         还没有账号？
@@ -57,32 +22,45 @@
         </UButton>
       </p>
     </template>
-  </UCard>
+  </UPageCard>
 </template>
 
 <script lang="ts" setup>
+import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 import type { LoginRequest } from '~/types'
 import * as v from 'valibot'
-import type { FormSubmitEvent } from '@nuxt/ui'
 
-interface Model {
-  email: string
-  password: string
-}
+const toast = useToast()
+const fields: AuthFormField[] = [{
+  name: 'email',
+  defaultValue: '',
+  type: 'email',
+  label: '邮箱',
+  placeholder: 'your@email.com',
+  required: true
+}, {
+  name: 'password',
+  defaultValue: '',
+  label: '密码',
+  type: 'password',
+  placeholder: '输入您的密码',
+  required: true
+}, {
+  name: 'remember',
+  label: '记住我',
+  type: 'checkbox'
+}]
 const schema = v.object({
   email: v.pipe(v.string(), v.email('请输入有效的邮箱地址')),
   password: v.pipe(v.string(), v.minLength(8, '密码长度至少8位'))
 })
 type Schema = v.InferOutput<typeof schema>
-const state = reactive<Model>({
-  email: '',
-  password: ''
-})
 
 const loading = ref(false)
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  // toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
+  toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
+  const state = event.data
   const req: LoginRequest = {
     email: state.email,
     password: state.password

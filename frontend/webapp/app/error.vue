@@ -26,5 +26,5 @@
 </template>
 
 <script setup lang="ts">
-import NilAreaFooter from '~/components/NilAreaFooter.vue'
+import NilAreaFooter from '~/components/default/NilAreaFooter.vue'
 </script>

@@ -1,21 +1,13 @@
 <template>
-  <UApp>
+  <UApp :locale="zh_cn">
     <NuxtLayout>
-      <NilAreaHeader
-        class="bg-default/60 backdrop-blur border-b/75 border-default/75"
-      />
-      <UMain>
-        <NuxtPage />
-      </UMain>
+      <NuxtPage />
     </NuxtLayout>
-    <NilAreaFooter
-      v-if="!route.meta.hideFooter"
-    />
   </UApp>
 </template>
 
 <script setup lang="ts">
-import NilAreaFooter from '~/components/NilAreaFooter.vue'
+import { zh_cn } from '@nuxt/ui/locale'
 
 const title = 'ツ箫声断丶何处莫凭栏 | 浅析'
 const description = '这里是浅析的个人网页'
@@ -36,5 +28,4 @@ useSeoMeta({
   ogTitle: title,
   ogDescription: description
 })
-const route = useRoute()
 </script>

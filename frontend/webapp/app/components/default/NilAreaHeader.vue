@@ -69,6 +69,10 @@ const items = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Blog',
     to: '/blog'
+  },
+  {
+    label: 'Dashboard',
+    to: '/dashboard'
   }
 ])
 </script>

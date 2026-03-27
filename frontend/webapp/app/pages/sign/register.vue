@@ -1,73 +1,15 @@
 <template>
-  <UCard>
-    <template #header>
-      <h3 class="text-xl font-semibold text-center">
-        创建账号
-      </h3>
+  <UPageCard>
+    <template #body>
+      <UAuthForm
+        :schema="schema"
+        title="注册"
+        description="输入您的凭据以创建您的帐户"
+        icon="i-lucide-user"
+        :fields="fields"
+        @submit="onSubmit"
+      />
     </template>
-    <UForm
-      :schema="schema"
-      :state="state"
-      class="space-y-4"
-      @submit="onSubmit"
-    >
-      <UFormField
-        label="用户名"
-        name="username"
-      >
-        <UInput
-          v-model="state.username"
-          placeholder="您的用户名"
-          icon="i-heroicons-user"
-          required
-        />
-      </UFormField>
-      <UFormField
-        label="邮箱"
-        name="email"
-      >
-        <UInput
-          v-model="state.email"
-          type="email"
-          placeholder="your@email.com"
-          icon="i-heroicons-envelope"
-          required
-        />
-      </UFormField>
-      <UFormField
-        label="密码"
-        name="password"
-      >
-        <UInput
-          v-model="state.password"
-          type="password"
-          placeholder="••••••••"
-          icon="i-heroicons-lock-closed"
-          required
-        />
-      </UFormField>
-      <UFormField
-        label="确认密码"
-        name="confirmPassword"
-      >
-        <UInput
-          v-model="state.confirmPassword"
-          type="password"
-          placeholder="••••••••"
-          icon="i-heroicons-check-circle"
-          required
-        />
-      </UFormField>
-      <UButton
-        type="submit"
-        color="primary"
-        block
-        :loading="loading"
-        size="lg"
-      >
-        注册
-      </UButton>
-    </UForm>
     <template #footer>
       <p class="text-sm text-center text-gray-500">
         已有账号？
@@ -80,20 +22,44 @@
         </UButton>
       </p>
     </template>
-  </UCard>
+  </UPageCard>
 </template>
 
 <script lang="ts" setup>
+import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 import type { RegisterRequest } from '~/types'
 import * as v from 'valibot'
-import type { FormSubmitEvent } from '@nuxt/ui'
 
-interface Model {
-  username: string
-  email: string
-  password: string
-  confirmPassword: string
-}
+const toast = useToast()
+const fields: AuthFormField[] = [{
+  name: 'username',
+  defaultValue: '',
+  type: 'text',
+  label: '用户名',
+  placeholder: '输入您的用户名',
+  required: true
+}, {
+  name: 'email',
+  defaultValue: '',
+  type: 'email',
+  label: '邮箱',
+  placeholder: 'your@email.com',
+  required: true
+}, {
+  name: 'password',
+  defaultValue: '',
+  label: '密码',
+  type: 'password',
+  placeholder: '输入您的密码',
+  required: true
+}, {
+  name: 'confirmPassword',
+  defaultValue: '',
+  label: '再次输入密码',
+  type: 'password',
+  placeholder: '确认您的密码',
+  required: true
+}]
 const schema = v.pipe(
   v.object({
     username: v.pipe(
@@ -121,16 +87,12 @@ const schema = v.pipe(
   )
 )
 type Schema = v.InferOutput<typeof schema>
-const state = reactive<Model>({
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: ''
-})
+
 const loading = ref(false)
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  // toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
+  toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
+  const state = event.data
   const req: RegisterRequest = {
     username: state.username,
     email: state.email,
