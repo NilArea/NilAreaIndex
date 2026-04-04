@@ -24,7 +24,6 @@ internal static partial class Configure
                     {
                         var configuration = builder.Configuration;
                         options.ClusterId = configuration.SafeGetConfigureValue("ClusterOptions:ClusterId");
-                        options.ServiceId = configuration.SafeGetConfigureValue("ClusterOptions:ServiceId");
                     })
                     .UseLocalhostClustering();
 #endif

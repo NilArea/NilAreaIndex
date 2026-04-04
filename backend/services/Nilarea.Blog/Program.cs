@@ -1,7 +1,7 @@
+using System.Net;
 using Microsoft.Extensions.Hosting;
 using NilArea.Blog.Configurations;
 using NilArea.Common;
-using Orleans.Configuration;
 using Orleans.Dashboard;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -20,12 +20,12 @@ builder.UseOrleans(siloBuilder =>
         .AddDashboard();
 #if DEBUG
     siloBuilder
-        .Configure<ClusterOptions>(options =>
-        {
-            options.ClusterId = configuration.SafeGetConfigureValue("CLUSTER_ID");
-            options.ServiceId = configuration.SafeGetConfigureValue("SERVICE_ID");
-        })
-        .UseLocalhostClustering();
+        .UseLocalhostClustering(
+            primarySiloEndpoint: new IPEndPoint(IPAddress.Parse("127.0.0.1"), 11111),
+            siloPort: 11112,
+            gatewayPort: 30001,
+            clusterId: configuration.SafeGetConfigureValue("CLUSTER_ID"),
+            serviceId: configuration.SafeGetConfigureValue("SERVICE_ID"));
 #else
     siloBuilder
         .UseKubernetesHosting();

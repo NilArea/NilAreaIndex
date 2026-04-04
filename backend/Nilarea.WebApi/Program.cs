@@ -55,12 +55,11 @@ app.UseAuthorization();
 // 自定义中间件
 //app.UseMiddleware<MyCustomMiddleware>();
 // Orleans仪表盘映射
-app.MapOrleansDashboard("/admin/dashboard");
+app.MapOrleansDashboard("/orleans");
 // API 终结点映射
 app.MapControllers();
 // SPA 回退路由
 app.MapFallbackToFile("index.html");
-
 #endregion
 
 app.Run();

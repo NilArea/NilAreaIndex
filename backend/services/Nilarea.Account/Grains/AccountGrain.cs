@@ -16,7 +16,7 @@ namespace NilArea.Account.Grains;
 [StatelessWorker]
 public class AccountGrain(
     ILogger<AccountGrain> logger,
-    AccountRepository accountRepository,
+    IAccountRepository accountRepository,
     IEmailServices emailServices,
     IValidator<RegisterAccountCommand> registerRequestValidator,
     IPasswordHasher passwordHasher
