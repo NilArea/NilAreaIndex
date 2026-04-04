@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using NilArea.Interfaces.Exceptions;
+using NilArea.Contracts.Enums;
+using NilArea.Contracts.Exceptions;
 
 namespace NilArea.Web.Utils.ExceptionHandler;
 

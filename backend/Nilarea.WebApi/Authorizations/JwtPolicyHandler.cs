@@ -1,10 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Authentication;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using NilArea.Contracts;
-using NilArea.Interfaces.Exceptions;
-using NilArea.Interfaces.IGrains;
+using NilArea.Contracts.Grains.Account;
 
 namespace NilArea.Web.Authorizations;
 

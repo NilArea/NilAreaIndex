@@ -2,8 +2,10 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NilArea.Contracts;
-using NilArea.Contracts.Dto;
-using NilArea.Interfaces.IGrains;
+using NilArea.Contracts.Commands.Account;
+using NilArea.Contracts.Enums;
+using NilArea.Contracts.Grains.Account;
+using NilArea.Contracts.Responses.Account;
 using StackExchange.Redis;
 using StackExchange.Redis.Extensions.Core.Abstractions;
 
@@ -15,8 +17,8 @@ public class ApiAuthController(
     ILogger<ApiAuthController> logger,
     IClusterClient clusterClient,
     IRedisDatabase redisDatabase,
-    IValidator<AccountRegisterRequest> registerRequestValidator,
-    IValidator<AccountLoginRequest> loginRequestValidator
+    IValidator<RegisterAccountCommand> registerRequestValidator,
+    IValidator<LoginAccountCommand> loginRequestValidator
 ) : ControllerBase
 {
     private static readonly InlineValidator<string> EmailValidator;
@@ -46,38 +48,38 @@ public class ApiAuthController(
     /// <summary>
     ///     用户注册（使用邮箱）
     /// </summary>
-    /// <param name="request">注册信息</param>
+    /// <param name="command">注册信息</param>
     /// <returns>注册结果</returns>
     [AllowAnonymous]
     [HttpPost("register")]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(AccountRegisterResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Register([FromBody] AccountRegisterRequest request)
+    [ProducesResponseType(typeof(RegisterAccountResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Register([FromBody] RegisterAccountCommand command)
     {
-        await registerRequestValidator.ValidateAndThrowAsync(request);
+        await registerRequestValidator.ValidateAndThrowAsync(command);
         var ag = clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
-        if (await ag.ExistAccountAsync(request.Email))
+        if (await ag.ExistAccountAsync(command.Email))
             return BadRequest("Email already registered");
-        return Ok(await ag.RegisterUserAsync(request));
+        return Ok(await ag.RegisterUserAsync(command));
     }
 
     /// <summary>
     ///     用户登录
     /// </summary>
-    /// <param name="request">登录凭证</param>
+    /// <param name="command">登录凭证</param>
     /// <returns>登录结果和令牌</returns>
     [AllowAnonymous]
     [HttpPost("login")]
-    [ProducesResponseType(typeof(AccountLoginResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(AccountLoginResponse), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Login([FromBody] AccountLoginRequest request)
+    [ProducesResponseType(typeof(LoginAccountResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(LoginAccountResponse), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Login([FromBody] LoginAccountCommand command)
     {
-        var validate = await loginRequestValidator.ValidateAsync(request);
+        var validate = await loginRequestValidator.ValidateAsync(command);
         if (!validate.IsValid)
             throw new ValidationException(validate.Errors);
-        if (!await redisDatabase.Database.BloomExistsAsync(BfAccount, request.Email))
+        if (!await redisDatabase.Database.BloomExistsAsync(BfAccount, command.Email))
             return BadRequest("Email is not registered");
         var ag = clusterClient.GetGrain<IAuthenticationGrain>(Guid.Empty);
-        return Ok(await ag.LoginAsync(request));
+        return Ok(await ag.LoginAsync(command));
     }
 }
