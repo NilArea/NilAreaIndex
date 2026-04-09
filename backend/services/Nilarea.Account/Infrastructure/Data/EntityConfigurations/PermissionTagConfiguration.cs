@@ -21,6 +21,17 @@ public class PermissionTagConfiguration :
         builder.Property(ug => ug.PermissionName)
             .IsRequired()
             .HasMaxLength(100);
+
+        builder.Property(ug => ug.Description)
+            .IsRequired()
+            .HasMaxLength(500);
+
+        builder.Property(ug => ug.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        builder.Property(ug => ug.UpdatedAt)
+            .IsRequired(false);
         /* ---------- 索引 ---------- */
         builder.HasIndex(ug => ug.PermissionName)
             .IsUnique()

@@ -110,5 +110,8 @@ public class SnowflakeIdGeneratorOptions
 
 public sealed class GuidGenerator : IIdGenerator<Guid>
 {
-    public Guid NextId() => Guid.CreateVersion7();
+    public Guid NextId()
+    {
+        return Guid.CreateVersion7();
+    }
 }

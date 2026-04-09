@@ -7,14 +7,14 @@ public class AccountGroup
     /// <summary>
     ///     组唯一ID
     /// </summary>
-    public required int GroupId { get; init; }
+    public int GroupId { get; init; }
 
     /// <summary>
     ///     组名
     /// </summary>
 
     [MaxLength(100)]
-    public required string GroupName { get; init; } = string.Empty;
+    public string GroupName { get; init; } = string.Empty;
 
     /// <summary>
     ///     组描述

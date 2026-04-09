@@ -84,6 +84,8 @@ public static class AccountConfigurations
         {
             collection
                 .AddSingleton<IAccountRepository, AccountRepository>()
+                .AddSingleton<IPermissionRepository, PermissionRepository>()
+                .AddSingleton<IConfirmRepository, ConfirmRepository>()
                 .AddSingleton<IEmailServices, EmailServices>()
                 .AddHostedService<ServiceInitializer>();
             return collection;

@@ -13,6 +13,9 @@ using StackExchange.Redis.Extensions.Core.Abstractions;
 
 namespace NilArea.Account.Infrastructure.Repositories;
 
+/// <summary>
+///     账号相关内容数据库实现
+/// </summary>
 public sealed class AccountRepository(
     ILogger<AccountRepository> logger,
     AccountDbContext dbContext,
@@ -22,24 +25,29 @@ public sealed class AccountRepository(
     /// <summary>
     ///     布隆过滤器,邮箱是否注册快速查询
     /// </summary>
-    private static RedisKey BfAccount => StaticValues.BfAccount;
-
-    /// <summary>
-    ///     验证码缓存键前缀
-    /// </summary>
-    private static RedisKey ConfirmKeyPrefix => StaticValues.ConfirmKeyPrefix;
+    private static RedisKey BfAccount => "BF:Account";
 
     /// <summary>
     ///     系统用户组名称到ID的映射
     /// </summary>
     private Dictionary<string, int> SystemGroupMap { get; set; } = null!;
 
+    /// <summary>
+    ///     检查账号是否存在
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <returns>账号是否存在</returns>
     public async ValueTask<bool> ExistsAccountAsync(Guid userId)
     {
         return await dbContext.AccountUsers.AnyAsync(au =>
             au.UserId == userId && au.DeleteAt == null);
     }
 
+    /// <summary>
+    ///     检查账号是否存在
+    /// </summary>
+    /// <param name="email">邮箱</param>
+    /// <returns>账号是否存在</returns>
     public async ValueTask<bool> ExistsAccountAsync(string email)
     {
         if (!await redisDatabase.Database.BloomExistsAsync(BfAccount, email)) return false;
@@ -47,175 +55,258 @@ public sealed class AccountRepository(
             au.Email == email && au.DeleteAt == null);
     }
 
-    public async ValueTask<AccountUserInfo?> FindAccountAsync(Guid userId)
+    /// <summary>
+    ///     根据用户ID获取账号
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <returns>账号信息</returns>
+    public async ValueTask<AccountUserInfo?> GetAccountAsync(Guid userId)
     {
         return await dbContext.AccountUsers.AsNoTracking()
+            .Include(au => au.UserGroups)
+            .ThenInclude(ug => ug.Group)
             .Where(au => au.UserId == userId && au.DeleteAt == null)
-            .Select(au => new AccountUserInfo(au.UserId, au.Email, au.UserName, au.CreatedAt,
-                au.UserGroups.Select(ug => ug.Group.GroupName)))
+            .Select(au => new AccountUserInfo
+            {
+                UserId = au.UserId,
+                Email = au.Email,
+                UserName = au.UserName,
+                CreatedAt = au.CreatedAt,
+                Groups = au.UserGroups.Select(ug => ug.Group.GroupName)
+            })
             .FirstOrDefaultAsync();
     }
 
-    public async ValueTask<AccountUserInfo?> FindAccountAsync(string email)
+    /// <summary>
+    ///     根据邮箱获取账号
+    /// </summary>
+    /// <param name="email">邮箱</param>
+    /// <returns>账号信息</returns>
+    public async ValueTask<AccountUserInfo?> GetAccountByEmailAsync(string email)
     {
         return await dbContext.AccountUsers.AsNoTracking()
+            .Include(au => au.UserGroups)
+            .ThenInclude(ug => ug.Group)
             .Where(au => au.Email == email && au.DeleteAt == null)
-            .Select(au => new AccountUserInfo(au.UserId, au.Email, au.UserName, au.CreatedAt,
-                au.UserGroups.Select(ug => ug.Group.GroupName)))
+            .Select(au => new AccountUserInfo
+            {
+                UserId = au.UserId,
+                Email = au.Email,
+                UserName = au.UserName,
+                CreatedAt = au.CreatedAt,
+                Groups = au.UserGroups.Select(ug => ug.Group.GroupName)
+            })
             .FirstOrDefaultAsync();
     }
 
+    /// <summary>
+    ///     新建账号
+    /// </summary>
+    /// <param name="email">邮箱</param>
+    /// <param name="passwordHash">密码哈希</param>
+    /// <param name="username">用户名</param>
+    /// <returns>新建的账号信息</returns>
+    /// <exception cref="AccountException">邮箱已注册时抛出</exception>
     public async ValueTask<AccountUserInfo> InsertAccountAsync(string email, string passwordHash, string username)
     {
         if (await ExistsAccountAsync(email))
             throw new AccountException("Email already registered", AccountAction.Register);
+
+        if (!SystemGroupMap.TryGetValue("Users", out var gid))
+            throw new AccountException("System group 'Users' not found", AccountAction.Register);
+
         var uid = idGenerator.NextId();
         var timeNow = DateTime.UtcNow;
-        var nau = new AccountUser
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            var nau = new AccountUser
+            {
+                UserId = uid,
+                Email = email,
+                UserName = username,
+                PasswordSaltHash = passwordHash,
+                CreatedAt = timeNow,
+                UpdateAt = timeNow
+            };
+
+            var ug = new AccountUserGroup
+            {
+                UserId = uid,
+                GroupId = gid,
+                JoinedAt = timeNow
+            };
+
+            await dbContext.AccountUsers.AddAsync(nau);
+            await dbContext.AccountUserGroups.AddAsync(ug);
+            await dbContext.SaveChangesAsync();
+            await redisDatabase.Database.BloomAddAsync(BfAccount, nau.Email);
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is MySqlException { Number: 1062 })
+        {
+            await transaction.RollbackAsync();
+            throw new AccountException("Account already exists.", AccountAction.Register);
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            logger.LogError(ex, "Failed to create account");
+            throw new AccountException("Failed to create account", AccountAction.Register);
+        }
+
+        return new AccountUserInfo
         {
             UserId = uid,
             Email = email,
             UserName = username,
-            PasswordSaltHash = passwordHash,
-            CreatedAt = timeNow
+            CreatedAt = timeNow,
+            Groups = ["Users"]
         };
-        var gid = SystemGroupMap[StaticValues.AccountSystemGroupNames.Users];
-        var ug = new AccountUserGroup
-        {
-            UserId = uid,
-            GroupId = gid
-        };
-        await dbContext.AccountUsers.AddAsync(nau);
-        await dbContext.AccountUserGroups.AddAsync(ug);
+    }
+
+    /// <summary>
+    ///     更新账号信息
+    /// </summary>
+    /// <param name="account">账号信息</param>
+    /// <returns>更新后的账号信息</returns>
+    /// <exception cref="AccountException">账号不存在时抛出</exception>
+    public async ValueTask<AccountUserInfo> UpdateAccountAsync(AccountUserInfo account)
+    {
+        var user = await dbContext.AccountUsers
+            .FirstOrDefaultAsync(au => au.UserId == account.UserId && au.DeleteAt == null);
+        if (user == null)
+            throw new AccountException("Account not found");
+
+        // 检查邮箱是否已被其他用户使用
+        if (user.Email != account.Email && await dbContext.AccountUsers.AsNoTracking()
+                .AnyAsync(au => au.Email == account.Email && au.UserId != account.UserId && au.DeleteAt == null))
+            throw new AccountException("Email already in use");
+
+        user.Email = account.Email;
+        user.UserName = account.UserName;
+        user.UpdateAt = DateTime.UtcNow;
+
         try
         {
             await dbContext.SaveChangesAsync();
-            await redisDatabase.Database.BloomAddAsync(BfAccount, nau.Email);
         }
-        catch (DbUpdateException ex)when (ex.InnerException is MySqlException { Number: 1062 })
+        catch (DbUpdateException ex) when (ex.InnerException is MySqlException { Number: 1062 })
         {
-            throw new AccountException("Account already exists.", AccountAction.Register);
+            throw new AccountException("Email already in use");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to update account: {UserId}", account.UserId);
+            throw new AccountException("Failed to update account");
         }
 
-        return new AccountUserInfo(uid, email, username, timeNow, [StaticValues.AccountSystemGroupNames.Users]);
+        return account;
     }
 
-    public async ValueTask UpdateAccountAsync(object update)
-    {
-    }
-
+    /// <summary>
+    ///     修改账号密码
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="newPasswordHash">新密码哈希</param>
+    /// <returns>是否修改成功</returns>
+    /// <exception cref="AccountException">账号不存在时抛出</exception>
     public async ValueTask<bool> ChangePasswordAsync(Guid userId, string newPasswordHash)
     {
         var user = await dbContext.AccountUsers
             .FirstOrDefaultAsync(au => au.UserId == userId && au.DeleteAt == null);
         if (user is null) throw new AccountException(AccountAction.ChangePassword);
+
         user.PasswordSaltHash = newPasswordHash;
-        dbContext.AccountUsers.Update(user);
+        user.UpdateAt = DateTime.UtcNow;
+
         try
         {
             await dbContext.SaveChangesAsync();
             return true;
         }
-        catch (DbUpdateException ex)when (ex.InnerException is MySqlException)
+        catch (DbUpdateException ex) when (ex.InnerException is MySqlException)
         {
+            logger.LogError(ex, "Failed to change password for user: {UserId}", userId);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to change password for user: {UserId}", userId);
             return false;
         }
     }
 
+    /// <summary>
+    ///     修改账号邮箱
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <param name="newEmail">新邮箱</param>
+    /// <returns>是否修改成功</returns>
     public async ValueTask<bool> ChangeEmailAsync(Guid userId, string newEmail)
     {
-        if (await dbContext.AccountUsers.AsNoTracking()
-                .AnyAsync(au => au.Email == newEmail && au.DeleteAt == null))
+        var user = await dbContext.AccountUsers
+            .FirstOrDefaultAsync(au => au.UserId == userId && au.DeleteAt == null);
+        if (user == null)
             return false;
-        var count = await dbContext.AccountUsers.Where(au => au.UserId == userId && au.DeleteAt == null)
-            .ExecuteUpdateAsync(au => au.SetProperty(p => p.Email, newEmail));
-        return count switch
+
+        // 检查邮箱是否已被其他用户使用
+        if (user.Email != newEmail && await dbContext.AccountUsers.AsNoTracking()
+                .AnyAsync(au => au.Email == newEmail && au.UserId != userId && au.DeleteAt == null))
+            return false;
+
+        user.Email = newEmail;
+        user.UpdateAt = DateTime.UtcNow;
+
+        try
         {
-            0 => false,
-            1 => true,
-            _ => throw new AccountException("Unknown error")
-        };
-    }
-
-    public async ValueTask<bool> DeleteAccountAsync(Guid userId)
-    {
-        var count = await dbContext.AccountUsers.Where(au => au.UserId == userId && au.DeleteAt == null)
-            .ExecuteUpdateAsync(au => au.SetProperty(p => p.DeleteAt, DateTime.UtcNow));
-        return count switch
+            await dbContext.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is MySqlException { Number: 1062 })
         {
-            0 => false,
-            1 => true,
-            _ => throw new AccountException("Unknown error")
-        };
-    }
-
-    public async ValueTask<(Guid UserId, string PasswordSaltHash)> GetAccountVerifyAsync(string email)
-    {
-        var up = await dbContext.AccountUsers.AsNoTracking()
-            .Where(au => au.Email == email && au.DeleteAt == null)
-            .Select(au => new { au.UserId, au.PasswordSaltHash })
-            .FirstOrDefaultAsync() ?? throw new AuthenticationException("Email does not registered");
-        return (up.UserId, up.PasswordSaltHash);
-    }
-
-    public async ValueTask<bool> CacheConfirmCodeAsync(string unique, string code, ConfirmType typeCode)
-    {
-        var rk = ConfirmKeyPrefix.Append(unique);
-        if (await redisDatabase.Database.KeyExistsAsync(rk)) return false;
-        await redisDatabase.Database.StringSetAsync(rk, code, GetExpirationTime());
-        return true;
-
-        TimeSpan GetExpirationTime()
+            logger.LogError(ex, "Email already in use: {Email}", newEmail);
+            return false;
+        }
+        catch (Exception ex)
         {
-            return typeCode switch
-            {
-                _ => TimeSpan.FromMinutes(5)
-            };
+            logger.LogError(ex, "Failed to change email for user: {UserId}", userId);
+            return false;
         }
     }
 
-    public async ValueTask<bool> ExistConfirmCodeAsync(string unique)
+    /// <summary>
+    ///     删除账号
+    /// </summary>
+    /// <param name="userId">用户ID</param>
+    /// <returns>是否删除成功</returns>
+    public async ValueTask<bool> DeleteAccountAsync(Guid userId)
     {
-        var rk = ConfirmKeyPrefix.Append(unique);
-        return await redisDatabase.Database.KeyExistsAsync(rk);
+        var user = await dbContext.AccountUsers
+            .FirstOrDefaultAsync(au => au.UserId == userId && au.DeleteAt == null);
+        if (user == null)
+            return false;
+
+        user.DeleteAt = DateTime.UtcNow;
+        user.UpdateAt = DateTime.UtcNow;
+
+        try
+        {
+            await dbContext.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to delete account: {UserId}", userId);
+            return false;
+        }
     }
 
-    public async ValueTask<bool> CheckConfirmCodeAsync(string unique, string code)
-    {
-        var rk = ConfirmKeyPrefix.Append(unique);
-        const string script = """
-                              local current = redis.call('GET', KEYS[1])
-                              if current == ARGV[1] then
-                                  redis.call('DEL', KEYS[1])
-                                  return 1
-                              else
-                                  return 0
-                              end
-                              """;
-        var ret = await redisDatabase.Database.ScriptEvaluateAsync(script, [rk], [code]);
-        if (ret.IsNull) return false;
-        return (bool)ret;
-    }
-
-    public async ValueTask<PermissionTagInfo[]> GetAllPermissionAsync(Guid userId)
-    {
-        var user = dbContext.AccountUsers.AsNoTracking()
-            .Where(u => u.UserId == userId && u.DeleteAt == null);
-        if (!await user.AnyAsync()) throw new AccountException("Account not available");
-        var permissions = await user.SelectMany(au =>
-                au.Permissions.Select(ups => ups.Permission)
-                    .Select(up => new { up.PermissionId, up.PermissionName }))
-            .Union(user.SelectMany(au => au.UserGroups)
-                .SelectMany(aug => aug.Group.Permissions)
-                .Select(gp => gp.Permission)
-                .Select(gp => new { gp.PermissionId, gp.PermissionName }))
-            .ToArrayAsync();
-        return permissions
-            .DistinctBy(p => p.PermissionId)
-            .Select(p => new PermissionTagInfo(p.PermissionId, p.PermissionName))
-            .ToArray();
-    }
-
+    /// <summary>
+    ///     初始化账号仓库
+    /// </summary>
+    /// <returns>任务完成状态</returns>
     public async Task InitializeAsync()
     {
         try
@@ -243,6 +334,10 @@ public sealed class AccountRepository(
         }
     }
 
+    /// <summary>
+    ///     释放账号仓库资源
+    /// </summary>
+    /// <returns>任务完成状态</returns>
     public Task DisposeAsync()
     {
         logger.LogInformation("Disposing Account Repository");

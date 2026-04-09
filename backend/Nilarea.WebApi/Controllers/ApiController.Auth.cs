@@ -40,7 +40,7 @@ public class ApiAuthController(
     public async Task<IActionResult> RegisterConfirm([FromQuery] string email)
     {
         await EmailValidator.ValidateAndThrowAsync(email);
-        var ag = clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
+        var ag = clusterClient.GetGrain<IAccountGrain>(0);
         await ag.CallConfirmKey(email, ConfirmType.Initial);
         return NoContent();
     }
@@ -57,7 +57,7 @@ public class ApiAuthController(
     public async Task<IActionResult> Register([FromBody] RegisterAccountCommand command)
     {
         await registerRequestValidator.ValidateAndThrowAsync(command);
-        var ag = clusterClient.GetGrain<IAccountGrain>(Guid.Empty);
+        var ag = clusterClient.GetGrain<IAccountGrain>(0);
         if (await ag.ExistAccountAsync(command.Email))
             return BadRequest("Email already registered");
         return Ok(await ag.RegisterUserAsync(command));
@@ -79,7 +79,7 @@ public class ApiAuthController(
             throw new ValidationException(validate.Errors);
         if (!await redisDatabase.Database.BloomExistsAsync(BfAccount, command.Email))
             return BadRequest("Email is not registered");
-        var ag = clusterClient.GetGrain<IAuthenticationGrain>(Guid.Empty);
+        var ag = clusterClient.GetGrain<IAuthenticationGrain>(0);
         return Ok(await ag.LoginAsync(command));
     }
 }

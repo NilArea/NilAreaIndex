@@ -60,6 +60,7 @@ app.MapOrleansDashboard("/orleans");
 app.MapControllers();
 // SPA 回退路由
 app.MapFallbackToFile("index.html");
+
 #endregion
 
 app.Run();

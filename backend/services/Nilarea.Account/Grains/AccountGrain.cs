@@ -17,8 +17,13 @@ namespace NilArea.Account.Grains;
 public class AccountGrain(
     ILogger<AccountGrain> logger,
     IAccountRepository accountRepository,
+    IConfirmRepository confirmRepository,
     IEmailServices emailServices,
     IValidator<RegisterAccountCommand> registerRequestValidator,
+    IValidator<ChangePasswordCommand> changePasswordValidator,
+    IValidator<DeleteAccountCommand> deleteAccountValidator,
+    IValidator<UpdateAccountInfoCommand> updateAccountInfoValidator,
+    IValidator<ResetPasswordCommand> resetPasswordValidator,
     IPasswordHasher passwordHasher
 ) : Grain, IAccountGrain
 {
@@ -37,37 +42,84 @@ public class AccountGrain(
     {
         var validate = await EmailValidator.ValidateAsync(email);
         if (!validate.IsValid)
+        {
+            logger.LogWarning("Email validation failed: {Email}, errors: {Errors}", email, validate.ToString());
             throw new AccountException(validate.ToString());
+        }
+
         return await accountRepository.ExistsAccountAsync(email);
     }
 
     public async ValueTask CallConfirmKey(string email, ConfirmType typeCode = ConfirmType.Default)
     {
+        logger.LogDebug("Sending confirm key to email: {Email}, type: {TypeCode}", email, typeCode);
+
         var validate = await EmailValidator.ValidateAsync(email);
-        if (!validate.IsValid) throw new AccountException(validate.ToString());
+        if (!validate.IsValid)
+        {
+            logger.LogWarning("Email validation failed: {Email}, errors: {Errors}", email, validate.ToString());
+            throw new AccountException(validate.ToString());
+        }
+
+        // 添加发送频率限制
+        var rateLimitKey = $"rate_limit:confirm_key:{email}";
+        if (await confirmRepository.ExistConfirmCodeAsync(rateLimitKey))
+        {
+            logger.LogWarning("Rate limit exceeded for email: {Email}", email);
+            throw new AccountException("Please wait before requesting another verification code");
+        }
+
         var confirmCode = Random.Shared.GetHexString(6);
-        if (!await accountRepository.CacheConfirmCodeAsync(email, confirmCode, typeCode))
+        if (!await confirmRepository.CacheConfirmCodeAsync(email, confirmCode, typeCode))
+        {
+            logger.LogError("Failed to cache confirm code for email: {Email}", email);
             throw new AccountException("Failed to cache confirm code");
+        }
+
         if (!await emailServices.SendConfirmKeyAsync(email, confirmCode, typeCode))
         {
-            await accountRepository.CheckConfirmCodeAsync(email, confirmCode);
+            logger.LogError("Failed to send confirm key to email: {Email}", email);
+            await confirmRepository.CheckConfirmCodeAsync(email, confirmCode);
             throw new AccountException("Failed to send confirm key");
         }
+
+        // 设置频率限制，1分钟内不能再次发送
+        await confirmRepository.CacheConfirmCodeAsync(rateLimitKey, "1", ConfirmType.Default);
+
+        logger.LogDebug("Confirm key sent successfully to email: {Email}", email);
     }
 
     public async ValueTask<RegisterAccountResponse> RegisterUserAsync(RegisterAccountCommand command)
     {
+        logger.LogDebug("Registering user with email: {Email}", command.Email);
+
         var validate = await registerRequestValidator.ValidateAsync(command);
         if (!validate.IsValid)
+        {
+            logger.LogWarning("Registration validation failed for email: {Email}, errors: {Errors}", command.Email,
+                validate.ToString());
             throw new AccountException(validate.ToString(), AccountAction.Register);
+        }
+
         if (await accountRepository.ExistsAccountAsync(command.Email))
+        {
+            logger.LogWarning("Email already registered: {Email}", command.Email);
             throw new AccountException("Email already registered", AccountAction.Register);
-        if (!await accountRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmCode))
+        }
+
+        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmCode))
+        {
+            logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
             throw new AccountException("Confirm Code is invalid", AccountAction.Register);
+        }
+
         var add = await accountRepository.InsertAccountAsync(
             command.Email,
             passwordHasher.SaltedHash(command.Password),
             command.Username);
+
+        logger.LogDebug("User registered successfully: {Email}, UserId: {UserId}", command.Email, add.UserId);
+
         return new RegisterAccountResponse
         {
             UserId = add.UserId,
@@ -79,11 +131,166 @@ public class AccountGrain(
 
     public async ValueTask DeleteAccountAsync(DeleteAccountCommand command)
     {
-        throw new NotImplementedException();
+        logger.LogDebug("Deleting account with email: {Email}", command.Email);
+
+        var validate = await deleteAccountValidator.ValidateAsync(command);
+        if (!validate.IsValid)
+        {
+            logger.LogWarning("Delete account validation failed for email: {Email}, errors: {Errors}", command.Email,
+                validate.ToString());
+            throw new AccountException(validate.ToString());
+        }
+
+        // 验证当前密码
+        var accountVerify = await confirmRepository.GetAccountVerifyAsync(command.Email);
+        if (!passwordHasher.Verify(command.Password, accountVerify.PasswordSaltHash))
+        {
+            logger.LogWarning("Incorrect password for email: {Email}", command.Email);
+            throw new AccountException("Current password is incorrect");
+        }
+
+        // 验证确认码
+        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey))
+        {
+            logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
+            throw new AccountException("Confirm Code is invalid");
+        }
+
+        // 删除账号
+        var result = await accountRepository.DeleteAccountAsync(accountVerify.UserId);
+        if (!result)
+        {
+            logger.LogError("Failed to delete account for email: {Email}", command.Email);
+            throw new AccountException("Failed to delete account");
+        }
+
+        logger.LogDebug("Account deleted successfully: {Email}, UserId: {UserId}", command.Email, accountVerify.UserId);
     }
 
     public async ValueTask ChangePassword(ChangePasswordCommand command)
     {
-        throw new NotImplementedException();
+        logger.LogDebug("Changing password for email: {Email}", command.Email);
+
+        var validate = await changePasswordValidator.ValidateAsync(command);
+        if (!validate.IsValid)
+        {
+            logger.LogWarning("Change password validation failed for email: {Email}, errors: {Errors}", command.Email,
+                validate.ToString());
+            throw new AccountException(validate.ToString());
+        }
+
+        // 验证当前密码
+        var accountVerify = await confirmRepository.GetAccountVerifyAsync(command.Email);
+        if (!passwordHasher.Verify(command.Password, accountVerify.PasswordSaltHash))
+        {
+            logger.LogWarning("Incorrect password for email: {Email}", command.Email);
+            throw new AccountException("Current password is incorrect");
+        }
+
+        // 验证确认码
+        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey))
+        {
+            logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
+            throw new AccountException("Confirm Code is invalid");
+        }
+
+        // 修改密码
+        await accountRepository.ChangePasswordAsync(accountVerify.UserId,
+            passwordHasher.SaltedHash(command.NewPassword));
+
+        logger.LogDebug("Password changed successfully for email: {Email}, UserId: {UserId}", command.Email,
+            accountVerify.UserId);
+    }
+
+    public async ValueTask<AccountInfoResponse> GetAccountInfoAsync(Guid userId)
+    {
+        logger.LogDebug("Getting account info for UserId: {UserId}", userId);
+
+        var account = await accountRepository.GetAccountAsync(userId);
+        if (account == null)
+        {
+            logger.LogWarning("Account not found for UserId: {UserId}", userId);
+            throw new AccountException("Account not found");
+        }
+
+        logger.LogDebug("Account info retrieved successfully for UserId: {UserId}, Email: {Email}", userId,
+            account.Email);
+
+        return new AccountInfoResponse
+        {
+            UserId = account.UserId,
+            Email = account.Email,
+            Username = account.UserName,
+            CreatedAt = account.CreatedAt
+        };
+    }
+
+    public async ValueTask<AccountInfoResponse> UpdateAccountInfoAsync(UpdateAccountInfoCommand command)
+    {
+        logger.LogDebug("Updating account info for UserId: {UserId}", command.UserId);
+
+        var validate = await updateAccountInfoValidator.ValidateAsync(command);
+        if (!validate.IsValid)
+        {
+            logger.LogWarning("Update account info validation failed for UserId: {UserId}, errors: {Errors}",
+                command.UserId, validate.ToString());
+            throw new AccountException(validate.ToString());
+        }
+
+        var account = await accountRepository.GetAccountAsync(command.UserId);
+        if (account == null)
+        {
+            logger.LogWarning("Account not found for UserId: {UserId}", command.UserId);
+            throw new AccountException("Account not found");
+        }
+
+        if (!string.IsNullOrEmpty(command.Username))
+            account.UserName = command.Username;
+
+        if (!string.IsNullOrEmpty(command.Email)) account.Email = command.Email;
+
+        var updatedAccount = await accountRepository.UpdateAccountAsync(account);
+
+        logger.LogDebug("Account info updated successfully for UserId: {UserId}, Email: {Email}", command.UserId,
+            updatedAccount.Email);
+
+        return new AccountInfoResponse
+        {
+            UserId = updatedAccount.UserId,
+            Email = updatedAccount.Email,
+            Username = updatedAccount.UserName,
+            CreatedAt = updatedAccount.CreatedAt
+        };
+    }
+
+    public async ValueTask ResetPasswordAsync(ResetPasswordCommand command)
+    {
+        logger.LogDebug("Resetting password for email: {Email}", command.Email);
+
+        var validate = await resetPasswordValidator.ValidateAsync(command);
+        if (!validate.IsValid)
+        {
+            logger.LogWarning("Reset password validation failed for email: {Email}, errors: {Errors}", command.Email,
+                validate.ToString());
+            throw new AccountException(validate.ToString());
+        }
+
+        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmCode))
+        {
+            logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
+            throw new AccountException("Confirm Code is invalid");
+        }
+
+        var account = await accountRepository.GetAccountByEmailAsync(command.Email);
+        if (account == null)
+        {
+            logger.LogWarning("Account not found for email: {Email}", command.Email);
+            throw new AccountException("Account not found");
+        }
+
+        await accountRepository.ChangePasswordAsync(account.UserId, passwordHasher.SaltedHash(command.NewPassword));
+
+        logger.LogDebug("Password reset successfully for email: {Email}, UserId: {UserId}", command.Email,
+            account.UserId);
     }
 }
