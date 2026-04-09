@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using NilArea.Common.Services;
 using NilArea.Contracts.Enums;
 
-namespace NilArea.Account.Infrastructure.ExternalServices;
+namespace NilArea.Account.Infrastructure.Services;
 
 public interface IEmailServices : IAsyncLifetime
 {

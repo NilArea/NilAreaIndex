@@ -47,15 +47,15 @@ public interface ITokenService
 /// </summary>
 public class TokenService(IConfiguration configuration) : ITokenService
 {
-    private readonly int _accessTokenExpiryMinutes = int.Parse(configuration["Jwt:AccessTokenExpiryMinutes"] ?? "15");
+    private readonly int _accessTokenExpiryMinutes = int.Parse(configuration["JWT_ACCESS_TOKEN_EXPIRY_MINUTES"] ?? "15");
 
     private readonly string _audience =
-        configuration["Jwt:Audience"] ?? throw new ArgumentNullException("Jwt:Audience");
+        configuration["JWT_AUDIENCE"] ?? throw new ArgumentNullException("Jwt:Audience");
 
-    private readonly string _issuer = configuration["Jwt:Issuer"] ?? throw new ArgumentNullException("Jwt:Issuer");
+    private readonly string _issuer = configuration["JWT_ISSUER"] ?? throw new ArgumentNullException("Jwt:Issuer");
 
     private readonly string _secretKey =
-        configuration["Jwt:SecretKey"] ?? throw new ArgumentNullException("Jwt:SecretKey");
+        configuration["JWT_SECRET_KEY"] ?? throw new ArgumentNullException("Jwt:SecretKey");
 
     /// <summary>
     ///     生成访问令牌

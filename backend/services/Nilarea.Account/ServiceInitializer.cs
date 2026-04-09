@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
-using NilArea.Account.Infrastructure.ExternalServices;
 using NilArea.Account.Infrastructure.Repositories;
+using NilArea.Account.Infrastructure.Services;
 
 namespace NilArea.Account;
 

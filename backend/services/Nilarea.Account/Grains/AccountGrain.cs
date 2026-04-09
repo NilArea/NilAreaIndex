@@ -1,7 +1,7 @@
 using FluentValidation;
 using Microsoft.Extensions.Logging;
-using NilArea.Account.Infrastructure.ExternalServices;
 using NilArea.Account.Infrastructure.Repositories;
+using NilArea.Account.Infrastructure.Services;
 using NilArea.Common.Utils;
 using NilArea.Contracts.Commands.Account;
 using NilArea.Contracts.Enums;

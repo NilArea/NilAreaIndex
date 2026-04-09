@@ -2,11 +2,13 @@ using FluentValidation;
 
 namespace NilArea.Contracts.Commands.Account;
 
+[GenerateSerializer]
+[Alias("NilArea.Contracts.Commands.Account.ResetPasswordCommand")]
 public record ResetPasswordCommand
 {
-    public required string Email { get; init; }
-    public required string ConfirmCode { get; init; }
-    public required string NewPassword { get; init; }
+    [Id(0)] public required string Email { get; init; }
+    [Id(1)] public required string ConfirmCode { get; init; }
+    [Id(2)] public required string NewPassword { get; init; }
 }
 
 internal sealed class ResetPasswordValidator : AbstractValidator<ResetPasswordCommand>

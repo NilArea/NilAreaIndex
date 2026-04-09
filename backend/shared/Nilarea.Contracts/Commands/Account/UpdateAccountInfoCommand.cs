@@ -2,11 +2,13 @@ using FluentValidation;
 
 namespace NilArea.Contracts.Commands.Account;
 
+[GenerateSerializer]
+[Alias("NilArea.Contracts.Commands.Account.UpdateAccountInfoCommand")]
 public record UpdateAccountInfoCommand
 {
-    public required Guid UserId { get; init; }
-    public string? Username { get; init; }
-    public string? Email { get; init; }
+    [Id(0)] public required Guid UserId { get; init; }
+    [Id(1)] public string? Username { get; init; }
+    [Id(2)] public string? Email { get; init; }
 }
 
 internal sealed class UpdateAccountInfoValidator : AbstractValidator<UpdateAccountInfoCommand>

@@ -1,4 +1,3 @@
-using NilArea.Web.Authorizations;
 using NilArea.Web.Utils.ExceptionHandler;
 
 namespace NilArea.Web.Configure;
@@ -25,8 +24,7 @@ internal static partial class Configure
                     policy => { policy.WithOrigins("http://localhost:5173").WithOrigins("http://localhost:15173"); });
             });
             builder.Services.AddAuthentication();
-            builder.Services.AddAuthorizationBuilder()
-                .AddNilareaAuthorization(builder.Configuration);
+            builder.Services.AddAuthorizationBuilder();
             return builder;
         }
     }

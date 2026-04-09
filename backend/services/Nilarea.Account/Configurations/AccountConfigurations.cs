@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NilArea.Account.Infrastructure.Data;
-using NilArea.Account.Infrastructure.ExternalServices;
 using NilArea.Account.Infrastructure.Repositories;
+using NilArea.Account.Infrastructure.Services;
 using NilArea.Common;
 using NilArea.Common.Utils;
 using NilArea.Contracts;
@@ -87,6 +87,8 @@ public static class AccountConfigurations
                 .AddSingleton<IPermissionRepository, PermissionRepository>()
                 .AddSingleton<IConfirmRepository, ConfirmRepository>()
                 .AddSingleton<IEmailServices, EmailServices>()
+                .AddSingleton<ITokenService, TokenService>()
+                .AddSingleton<ITokenStorageService, TokenStorageService>()
                 .AddHostedService<ServiceInitializer>();
             return collection;
         }
