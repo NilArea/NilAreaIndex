@@ -38,5 +38,23 @@ public static partial class Extensions
         {
             return configuration.GetConnectionString(key) ?? defaultValue;
         }
+
+        public string GetSecretFromFile(string key, string defaultSuffix = "_FILE")
+        {
+            var secret = configuration[key];
+            if (string.IsNullOrWhiteSpace(secret)) return secret;
+            var path = configuration[key + defaultSuffix];
+            if (string.IsNullOrWhiteSpace(path))
+                throw new KeyNotFoundException($"\"{key}\" is a required configure key");
+            try
+            {
+                return File.ReadAllText(Path.GetFullPath(path));
+            }
+            catch (Exception _)
+            {
+                throw new KeyNotFoundException(
+                    $"\"{key}\" is a required configure key, but the file \"{path}\" is not found");
+            }
+        }
     }
 }

@@ -1,0 +1,54 @@
+<root>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="DescriptionUniquePriority" xml:space="preserve">
+        <value>同一符号上的以及继承的多个EnvironmentVariableNameFormatAttribute必须具有不同的优先级值.</value>
+    </data>
+    <data name="MessageFormatUniquePriority" xml:space="preserve">
+        <value>优先级值'{0}'已被使用</value>
+    </data>
+    <data name="TitleUniquePriority" xml:space="preserve">
+        <value>优先级值必须是唯一的</value>
+    </data>
+    <data name="TitleDuplicateFormat" xml:space="preserve">
+        <value>重复的格式化字符串</value>
+    </data>
+    <data name="TitleInvalidFormat" xml:space="preserve">
+        <value>无效的格式化字符串</value>
+    </data>
+    <data name="MessageFormatInvalidFormat" xml:space="preserve">
+        <value>格式化字符串不能为空</value>
+    </data>
+    <data name="DescriptionInvalidFormat" xml:space="preserve">
+        <value>EnvironmentVariableNameFormatAttribute的Prefix和Suffix至少一个不为空.</value>
+    </data>
+    <data name="DescriptionDuplicateFormat" xml:space="preserve">
+        <value>同一符号上的以及继承的多个EnvironmentVariableNameFormatAttribute必须具有不同的Prefix+Suffix组合.</value>
+    </data>
+    <data name="MessageFormatDuplicateFormat" xml:space="preserve">
+        <value>格式化字符串'{0}'已被使用</value>
+    </data>
+    <data name="DefaultErrorMessage" xml:space="preserve">
+        <value>环境变量'{0}'是必需的.</value>
+    </data>
+    <data name="UseDefaultMessage" xml:space="preserve">
+        <value>环境变量'{0}'已设置为默认值'{1}'.</value>
+    </data>
+    <data name="FatalMessage" xml:space="preserve">
+        <value>环境变量预校验未通过.</value>
+    </data>
+</root>

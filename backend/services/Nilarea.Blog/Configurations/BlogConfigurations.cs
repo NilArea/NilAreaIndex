@@ -5,8 +5,7 @@ using NilArea.Blog.Infrastructure.Data;
 using NilArea.Common;
 using NilArea.Common.Utils;
 using NilArea.Contracts;
-using ShardingCore;
-using ShardingCore.Core.ShardingConfigurations;
+using NilArea.Contracts.Annotation;
 using StackExchange.Redis.Extensions.Core;
 using StackExchange.Redis.Extensions.Core.Abstractions;
 using StackExchange.Redis.Extensions.Core.Configuration;
@@ -15,6 +14,7 @@ using StackExchange.Redis.Extensions.Newtonsoft;
 
 namespace NilArea.Blog.Configurations;
 
+[EnvironmentVariableNameFormat(Suffix = "_FILE")]
 public static class BlogConfigurations
 {
     extension(IServiceCollection collection)
@@ -34,31 +34,18 @@ public static class BlogConfigurations
                 .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         }
 
+        [RequireEnvironmentVariable("MYSQL_CONNECTION_STRING")]
         public IServiceCollection AddNilareaDbContext(IConfiguration configuration)
         {
-            collection.AddShardingDbContext<BlogDbContext>()
-                .UseConfig(ConfigDbContext)
-                .AddShardingCore();
-            return collection;
-
-            void ConfigDbContext(ShardingConfigOptions op)
+            collection.AddDbContextPool<BlogDbContext>((sp, builder) =>
             {
-                var sqlShard0 = configuration.SafeGetConfigureValue("MYSQL_SHARD0");
-                var sqlShard1 = configuration.SafeGetConfigureValue("MYSQL_SHARD1");
-                var sqlShard2 = configuration.SafeGetConfigureValue("MYSQL_SHARD2");
-                //如何通过字符串查询创建DbContext
-                op.UseShardingQuery((conStr, sqb) => { sqb.UseMySQL(conStr); });
-                //如何通过事务创建DbContext
-                op.UseShardingTransaction((conStr, stb) => { stb.UseMySQL(conStr); });
-                op.AddDefaultDataSource("ds0", sqlShard0);
-                op.AddExtraDataSource(_ => new Dictionary<string, string>
-                {
-                    { "ds1", sqlShard1 },
-                    { "ds2", sqlShard2 }
-                });
-            }
+                var connectionString = configuration.GetSecretFromFile("MYSQL_CONNECTION_STRING");
+                builder.UseMySQL(connectionString);
+            });
+            return collection;
         }
 
+        [RequireEnvironmentVariable("REDIS_CLUSTER")]
         public IServiceCollection AddNilareaCache(IConfiguration configuration)
         {
             collection.AddSingleton<IRedisClientFactory, RedisClientFactory>();
@@ -71,7 +58,7 @@ public static class BlogConfigurations
             {
                 var conf = new RedisConfiguration
                 {
-                    ConnectionString = configuration.SafeGetConfigureValue("REDIS_CLUSTER")
+                    ConnectionString = configuration.GetSecretFromFile("REDIS_CLUSTER")
                 };
                 return [conf];
             });

@@ -1,10 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using ShardingCore.Sharding;
 
 namespace NilArea.Blog.Infrastructure.Data;
 
 public class
-    BlogDbContext(DbContextOptions<BlogDbContext> options) : AbstractShardingDbContext(options)
+    BlogDbContext(DbContextOptions<BlogDbContext> options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

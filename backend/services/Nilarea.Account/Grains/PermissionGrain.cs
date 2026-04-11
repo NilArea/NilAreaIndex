@@ -10,7 +10,7 @@ using Orleans.Concurrency;
 namespace NilArea.Account.Grains;
 
 /// <summary>
-/// 权限管理 Grain 实现
+///     权限管理 Grain 实现
 /// </summary>
 [Reentrant]
 [StatelessWorker]
@@ -24,7 +24,7 @@ public class PermissionGrain(
 ) : Grain, IPermissionGrain
 {
     /// <summary>
-    /// 获取所有权限
+    ///     获取所有权限
     /// </summary>
     /// <returns>所有权限列表</returns>
     public async ValueTask<PermissionInfoResponse[]> GetAllPermissionsAsync()
@@ -51,7 +51,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 创建权限
+    ///     创建权限
     /// </summary>
     /// <param name="command">创建权限命令</param>
     /// <returns>创建的权限信息</returns>
@@ -82,7 +82,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 更新权限
+    ///     更新权限
     /// </summary>
     /// <param name="command">更新权限命令</param>
     /// <returns>更新后的权限信息</returns>
@@ -113,7 +113,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 删除权限
+    ///     删除权限
     /// </summary>
     /// <param name="permissionId">权限ID</param>
     /// <returns>是否删除成功</returns>
@@ -132,7 +132,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 获取所有用户组
+    ///     获取所有用户组
     /// </summary>
     /// <returns>所有用户组列表</returns>
     public async ValueTask<GroupInfoResponse[]> GetAllGroupsAsync()
@@ -156,7 +156,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 创建用户组
+    ///     创建用户组
     /// </summary>
     /// <param name="command">创建用户组命令</param>
     /// <returns>创建的用户组信息</returns>
@@ -189,7 +189,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 更新用户组
+    ///     更新用户组
     /// </summary>
     /// <param name="command">更新用户组命令</param>
     /// <returns>更新后的用户组信息</returns>
@@ -221,7 +221,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 删除用户组
+    ///     删除用户组
     /// </summary>
     /// <param name="groupId">用户组ID</param>
     /// <returns>是否删除成功</returns>
@@ -240,7 +240,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 为用户组分配权限
+    ///     为用户组分配权限
     /// </summary>
     /// <param name="groupId">用户组ID</param>
     /// <param name="permissionId">权限ID</param>
@@ -275,7 +275,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 从用户组移除权限
+    ///     从用户组移除权限
     /// </summary>
     /// <param name="groupId">用户组ID</param>
     /// <param name="permissionId">权限ID</param>
@@ -310,7 +310,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 将用户添加到用户组
+    ///     将用户添加到用户组
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <param name="groupId">用户组ID</param>
@@ -344,7 +344,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 将用户从用户组移除
+    ///     将用户从用户组移除
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <param name="groupId">用户组ID</param>
@@ -378,7 +378,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 为用户添加单独权限
+    ///     为用户添加单独权限
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <param name="permissionId">权限ID</param>
@@ -412,7 +412,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 从用户移除单独权限
+    ///     从用户移除单独权限
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <param name="permissionId">权限ID</param>
@@ -446,7 +446,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 检查用户是否拥有指定的权限
+    ///     检查用户是否拥有指定的权限
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <param name="permissionIds">权限ID列表</param>
@@ -483,7 +483,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 获取用户的所有权限（包括直接权限和组权限）
+    ///     获取用户的所有权限（包括直接权限和组权限）
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <returns>用户的所有权限</returns>
@@ -511,7 +511,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 获取用户组的所有权限
+    ///     获取用户组的所有权限
     /// </summary>
     /// <param name="groupId">用户组ID</param>
     /// <returns>用户组的所有权限</returns>
@@ -539,7 +539,7 @@ public class PermissionGrain(
     }
 
     /// <summary>
-    /// 获取用户的所有用户组
+    ///     获取用户的所有用户组
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <returns>用户的所有用户组</returns>

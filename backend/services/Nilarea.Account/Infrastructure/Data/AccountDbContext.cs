@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using NilArea.Account.Infrastructure.Data.Entities;
 using NilArea.Account.Infrastructure.Data.EntityConfigurations;
-using ShardingCore.Sharding;
 
 namespace NilArea.Account.Infrastructure.Data;
 
 public class
-    AccountDbContext(DbContextOptions<AccountDbContext> options) : AbstractShardingDbContext(options)
+    AccountDbContext(DbContextOptions<AccountDbContext> options) : DbContext(options)
 {
     public DbSet<AccountUser> AccountUsers { get; set; }
     public DbSet<AccountGroup> AccountGroups { get; set; }

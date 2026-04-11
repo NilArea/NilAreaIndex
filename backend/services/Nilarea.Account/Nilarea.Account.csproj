@@ -10,6 +10,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\shared\NilArea.Generator\Nilarea.Generator\Nilarea.Generator.csproj"
+                          OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\shared\Nilarea.Contracts\Nilarea.Contracts.csproj"/>
         <PackageReference Include="Microsoft.Orleans.Server" Version="10.0.1"/>
         <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" Version="10.0.1"/>
@@ -29,7 +34,6 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.5"/>
-        <PackageReference Include="ShardingCore" Version="7.10.2.1"/>
     </ItemGroup>
 
     <ItemGroup>

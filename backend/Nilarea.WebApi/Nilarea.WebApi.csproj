@@ -18,6 +18,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\shared\NilArea.Generator\Nilarea.Generator\Nilarea.Generator.csproj"
+                          OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Microsoft.Orleans.Client" Version="10.0.1"/>
     </ItemGroup>
 
@@ -42,6 +47,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Authorizations\" />
+        <Folder Include="Authorizations\"/>
     </ItemGroup>
 </Project>

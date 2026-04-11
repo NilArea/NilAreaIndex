@@ -6,9 +6,7 @@
       "dotnetRunMessages": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "MYSQL_SHARD0": "Server=127.0.0.1;Port=3300;Database=NilArea;Uid=nilorleans;Pwd=9b6b00c9b2b312b2734bb9b781607b8b4730b6eda49026caadd880af4c6abf5d;AllowUserVariables=true",
-        "MYSQL_SHARD1": "Server=127.0.0.1;Port=3301;Database=NilArea;Uid=nilorleans;Pwd=9b6b00c9b2b312b2734bb9b781607b8b4730b6eda49026caadd880af4c6abf5d;AllowUserVariables=true",
-        "MYSQL_SHARD2": "Server=127.0.0.1;Port=3302;Database=NilArea;Uid=nilorleans;Pwd=9b6b00c9b2b312b2734bb9b781607b8b4730b6eda49026caadd880af4c6abf5d;AllowUserVariables=true",
+        "MYSQL_CONNECTION_STRING": "Server=127.0.0.1;Port=3300;Database=NilArea;Uid=nilorleans;Pwd=9b6b00c9b2b312b2734bb9b781607b8b4730b6eda49026caadd880af4c6abf5d;AllowUserVariables=true",
         "REDIS_CLUSTER": "127.0.0.1:6379,password=1241936d,allowAdmin=true",
         "CLUSTER_ID": "nilarea-cluster",
         "SERVICE_ID": "blog-service"

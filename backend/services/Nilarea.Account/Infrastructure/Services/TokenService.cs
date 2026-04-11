@@ -3,6 +3,8 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using NilArea.Common;
+using NilArea.Contracts.Annotation;
 
 namespace NilArea.Account.Infrastructure.Services;
 
@@ -45,17 +47,20 @@ public interface ITokenService
 /// <summary>
 ///     令牌管理服务实现
 /// </summary>
+[EnvironmentVariableNameFormat(Suffix = "_FILE")]
 public class TokenService(IConfiguration configuration) : ITokenService
 {
-    private readonly int _accessTokenExpiryMinutes = int.Parse(configuration["JWT_ACCESS_TOKEN_EXPIRY_MINUTES"] ?? "15");
+    private readonly int _accessTokenExpiryMinutes =
+        int.Parse(configuration["JWT_ACCESS_TOKEN_EXPIRY_MINUTES"] ?? "15");
 
-    private readonly string _audience =
-        configuration["JWT_AUDIENCE"] ?? throw new ArgumentNullException("Jwt:Audience");
+    [RequireEnvironmentVariable("JWT_AUDIENCE", ErrorMessage = "Jwt:Audience is required")]
+    private readonly string _audience = configuration.GetSecretFromFile("JWT_AUDIENCE");
 
-    private readonly string _issuer = configuration["JWT_ISSUER"] ?? throw new ArgumentNullException("Jwt:Issuer");
+    [RequireEnvironmentVariable("JWT_ISSUER", ErrorMessage = "Jwt:Issuer is required")]
+    private readonly string _issuer = configuration.GetSecretFromFile("JWT_ISSUER");
 
-    private readonly string _secretKey =
-        configuration["JWT_SECRET_KEY"] ?? throw new ArgumentNullException("Jwt:SecretKey");
+    [RequireEnvironmentVariable("JWT_SECRET_KEY", ErrorMessage = "Jwt:SecretKey is required", FailFast = false)]
+    private readonly string _secretKey = configuration.GetSecretFromFile("JWT_SECRET_KEY");
 
     /// <summary>
     ///     生成访问令牌

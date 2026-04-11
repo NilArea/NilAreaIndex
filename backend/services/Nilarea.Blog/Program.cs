@@ -1,19 +1,27 @@
 using System.Net;
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Hosting;
 using NilArea.Blog.Configurations;
 using NilArea.Common;
+using NilArea.Contracts.Annotation;
 using Orleans.Dashboard;
 
-public class Program
-{
-    static Program()
-    {
-    }
+namespace NilArea.Blog;
 
+public partial class Program
+{
     private static async Task Main(string[] args)
     {
-        var builder = Host.CreateApplicationBuilder(args);
+        var builder = CreateHostBuilder(args);
+        var host = builder.Build();
+        await host.RunAsync();
+    }
+
+    [EnvironmentVariableNameFormat(Prefix = "NIL_")]
+    [RequireEnvironmentVariable("CLUSTER_ID", DefaultValue = "nilarea-cluster")]
+    [RequireEnvironmentVariable("SERVICE_ID", DefaultValue = "nilarea-blog")]
+    private static IHostBuilder CreateHostBuilder(string[] args)
+    {
+        var builder = Host.CreateDefaultBuilder(args);
 
         builder.UseOrleans(siloBuilder =>
         {
@@ -40,14 +48,6 @@ public class Program
                 .UseKubernetesHosting();
 #endif
         });
-
-        var host = builder.Build();
-
-        await host.RunAsync();
-    }
-
-    [ModuleInitializer]
-    internal static void Initialization()
-    {
+        return builder;
     }
 }

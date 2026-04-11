@@ -1,4 +1,5 @@
 using NilArea.Common;
+using NilArea.Contracts.Annotation;
 using OpenSearch.Client;
 using OpenSearch.Net;
 using Orleans.Configuration;
@@ -12,6 +13,7 @@ internal static partial class Configure
 {
     extension(IHostApplicationBuilder builder)
     {
+        [RequireEnvironmentVariable("CLUSTER_ID", DefaultValue = "nilarea-cluster")]
         public IHostApplicationBuilder ConfigureNilareaOrleans()
         {
             builder.UseOrleansClient(clientBuilder =>
@@ -23,7 +25,7 @@ internal static partial class Configure
                     .Configure<ClusterOptions>(options =>
                     {
                         var configuration = builder.Configuration;
-                        options.ClusterId = configuration.SafeGetConfigureValue("ClusterOptions:ClusterId");
+                        options.ClusterId = configuration.SafeGetConfigureValue("CLUSTER_ID");
                     })
                     .UseLocalhostClustering();
 #endif
@@ -31,6 +33,8 @@ internal static partial class Configure
             return builder;
         }
 
+        [RequireEnvironmentVariable("REDIS_CLUSTER")]
+        [EnvironmentVariableNameFormat(Suffix = "_FILE")]
         public IHostApplicationBuilder ConfigureRedis()
         {
             builder.Services
@@ -39,7 +43,7 @@ internal static partial class Configure
                     var configuration = builder.Configuration;
                     var conf = new RedisConfiguration
                     {
-                        ConnectionString = configuration.SafeGetConnectionString("REDIS_CLUSTER")
+                        ConnectionString = configuration.GetSecretFromFile("REDIS_CLUSTER")
                     };
                     return [conf];
                 });

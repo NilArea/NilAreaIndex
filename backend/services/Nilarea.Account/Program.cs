@@ -1,10 +1,12 @@
-using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Hosting;
 using NilArea.Account.Configurations;
 using NilArea.Common;
+using NilArea.Contracts.Annotation;
 using Orleans.Dashboard;
 
-public class Program
+namespace NilArea.Account;
+
+public partial class Program
 {
     private static async Task Main(string[] args)
     {
@@ -13,6 +15,9 @@ public class Program
         await host.RunAsync();
     }
 
+    [RequireEnvironmentVariable("CLUSTER_ID", DefaultValue = "nilarea-cluster")]
+    [RequireEnvironmentVariable("SERVICE_ID", DefaultValue = "nilarea-account")]
+    [EnvironmentVariableNameFormat(Prefix = "NIL_", Priority = 1)]
     private static IHostBuilder CreateHostBuilder(string[] args)
     {
         var builder = Host.CreateDefaultBuilder(args);
@@ -44,32 +49,5 @@ public class Program
         });
 
         return builder;
-    }
-
-    [ModuleInitializer]
-    internal static void Initialization()
-    {
-        // 校验JWT相关环境变量
-        ValidateEnvironmentVariable("JWT_AUDIENCE", "Jwt:Audience");
-        ValidateEnvironmentVariable("JWT_ISSUER", "Jwt:Issuer");
-        ValidateEnvironmentVariable("JWT_SECRET_KEY", "Jwt:SecretKey");
-        ValidateEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRY_MINUTES", "Jwt:AccessTokenExpiryMinutes", false);
-
-        // 校验集群相关环境变量
-        ValidateEnvironmentVariable("CLUSTER_ID", "CLUSTER_ID");
-        ValidateEnvironmentVariable("SERVICE_ID", "SERVICE_ID");
-    }
-
-    private static void ValidateEnvironmentVariable(string envName, string configName = null, bool failFast = true)
-    {
-        var value = Environment.GetEnvironmentVariable(envName);
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            var err = new InvalidOperationException($"环境变量 {envName} (对应配置 {configName}) 未设置或为空");
-            if (failFast)
-                throw err;
-            else
-                Console.Error.WriteLine(err);
-        }
     }
 }
