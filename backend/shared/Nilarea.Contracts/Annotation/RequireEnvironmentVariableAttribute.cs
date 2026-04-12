@@ -5,8 +5,9 @@ namespace NilArea.Contracts.Annotation;
                 AttributeTargets.Method | AttributeTargets.Parameter,
     AllowMultiple = true)]
 public sealed class RequireEnvironmentVariableAttribute(
-    string EnvironmentVariableName) : Attribute
+    string environmentVariableName) : Attribute
 {
+    public string EnvironmentVariableName { get; } = environmentVariableName;
     public string? ErrorMessage { get; set; }
     public string? DefaultValue { get; set; }
     public bool FailFast { get; set; } = true;
