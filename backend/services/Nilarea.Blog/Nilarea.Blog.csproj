@@ -16,7 +16,6 @@
 
     <ItemGroup>
         <Folder Include="DTOs\"/>
-        <Folder Include="Infrastructure\Data\Entities\"/>
         <Folder Include="Infrastructure\Data\EntityConfigurations\"/>
         <Folder Include="Infrastructure\ExternalServices\"/>
         <Folder Include="Infrastructure\Repositories\"/>
