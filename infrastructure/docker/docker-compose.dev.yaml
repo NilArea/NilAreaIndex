@@ -9,9 +9,7 @@ networks:
           gateway: 172.27.0.1
 
 volumes:
-  mysql-shard0-data:
-  mysql-shard1-data:
-  mysql-shard2-data:
+  mysql-data:
   redis-node0-data:
   redis-node1-data:
   redis-node2-data:
@@ -31,51 +29,21 @@ secrets:
     file: ./secrets/cert.key
 
 services:
-  mysql-shard0:
+  mysql-shard:
     extends:
       file: docker-compose.base.yaml
       service: x-mysql
-    container_name: mysql-shard0
+    container_name: mysql-shard
     secrets:
       - mysql_root_password
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
     volumes:
       - ./configs/mysql/shard.cnf:/etc/mysql/my.cnf:ro
-      - mysql-shard0-data:/var/lib/mysql:rw
+      - mysql-data:/var/lib/mysql:rw
       - ./configs/mysql/scripts:/docker-entrypoint-initdb.d
     ports:
       - 3300:3306
-  mysql-shard1:
-    extends:
-      file: docker-compose.base.yaml
-      service: x-mysql
-    container_name: mysql-shard1
-    secrets:
-      - mysql_root_password
-    environment:
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
-    volumes:
-      - ./configs/mysql/shard.cnf:/etc/mysql/my.cnf:ro
-      - mysql-shard1-data:/var/lib/mysql:rw
-      - ./configs/mysql/scripts:/docker-entrypoint-initdb.d
-    ports:
-      - 3301:3306
-  mysql-shard2:
-    extends:
-      file: docker-compose.base.yaml
-      service: x-mysql
-    container_name: mysql-shard2
-    secrets:
-      - mysql_root_password
-    environment:
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
-    volumes:
-      - ./configs/mysql/shard.cnf:/etc/mysql/my.cnf:ro
-      - mysql-shard2-data:/var/lib/mysql:rw
-      - ./configs/mysql/scripts:/docker-entrypoint-initdb.d
-    ports:
-      - 3302:3306
   redis-proxy:
     image: envoyproxy/envoy:dev-d568d57938c13d36f46405290d6a2a5e2ceed710
     ports:
