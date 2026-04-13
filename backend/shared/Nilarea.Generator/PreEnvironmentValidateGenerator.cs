@@ -151,7 +151,7 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
             formats.Sort(static (l, r) => l.Priority.CompareTo(r.Priority));
             foreach (var (_, name) in formats)
             {
-                writer.WriteLine($"if (System.Environment.GetEnvironmentVariable(\"{name}\") is not null)");
+                writer.WriteLine($"if (!match && System.Environment.GetEnvironmentVariable(\"{name}\") is not null)");
                 writer.WriteLine("{");
                 writer.Indent++;
                 writer.WriteLine("match = true;");
