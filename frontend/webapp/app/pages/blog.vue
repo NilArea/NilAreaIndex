@@ -1,5 +1,5 @@
 <template>
-  <UContainer />
+  <NuxtPage />
 </template>
 
 <script setup lang="ts">
