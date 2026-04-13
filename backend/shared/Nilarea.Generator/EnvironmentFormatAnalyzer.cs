@@ -4,6 +4,8 @@ using System.Linq;
 using System.Resources;
 using System.Threading;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Nilarea.Generator;
@@ -17,40 +19,98 @@ public class EnvironmentFormatAnalyzer : DiagnosticAnalyzer
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
         [UniquePriorityRule, DuplicateFormatRule, InvalidFormatRule];
 
-
     public override void Initialize(AnalysisContext context)
     {
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze |
                                                GeneratedCodeAnalysisFlags.ReportDiagnostics);
-        context.RegisterSymbolAction(AnalyzeSymbol,
-            SymbolKind.NamedType,
-            SymbolKind.Field,
-            SymbolKind.Property,
-            SymbolKind.Method,
-            SymbolKind.Parameter);
+        context.RegisterSyntaxNodeAction(AnalyzeSymbol,
+            SyntaxKind.ClassDeclaration,
+            SyntaxKind.StructDeclaration,
+            SyntaxKind.FieldDeclaration,
+            SyntaxKind.PropertyDeclaration,
+            SyntaxKind.MethodDeclaration,
+            SyntaxKind.LocalFunctionStatement,
+            SyntaxKind.Parameter);
     }
 
-    private static void AnalyzeSymbol(SymbolAnalysisContext context)
+    private void AnalyzeSymbol(SyntaxNodeAnalysisContext context)
     {
-        var attrs = GetEnvNameFormatAttributes(context.Symbol, context.CancellationToken);
-        HashSet<string> formats = [];
-        HashSet<int> priorities = [];
-        foreach (var (parent, attr) in attrs)
+        var attrs = GetEnvironmentValidate(context, context.CancellationToken);
+        foreach (var fs in attrs)
         {
-            var location = attr.ApplicationSyntaxReference?.GetSyntax().GetLocation();
-            if (!GetAttributeValue(attr, out var priority, out var prefix, out var suffix) && !parent)
-                context.ReportDiagnostic(Diagnostic.Create(InvalidFormatRule, location));
-            if (!priorities.Add(priority) && !parent)
-                context.ReportDiagnostic(Diagnostic.Create(UniquePriorityRule, location, priority));
-            if (formats.Add($"{prefix}${suffix}") || parent) continue;
-            if (string.IsNullOrWhiteSpace(prefix))
-                context.ReportDiagnostic(Diagnostic.Create(DuplicateFormatRule, location, $"Suffix: {suffix}"));
-            else if (string.IsNullOrWhiteSpace(suffix))
-                context.ReportDiagnostic(Diagnostic.Create(DuplicateFormatRule, location, $"Prefix: {prefix}"));
-            else
-                context.ReportDiagnostic(Diagnostic.Create(DuplicateFormatRule, location,
-                    $"Prefix: {prefix}, Suffix: {suffix}"));
+            HashSet<string> formats = [];
+            HashSet<int> priorities = [];
+            foreach (var (parent, attr) in fs.Formats)
+            {
+                var location = attr.ApplicationSyntaxReference?.GetSyntax().GetLocation();
+                if (!GetAttributeValue(attr, out var priority, out var prefix, out var suffix) && !parent)
+                    context.ReportDiagnostic(Diagnostic.Create(InvalidFormatRule, location));
+                if (!priorities.Add(priority) && !parent)
+                    context.ReportDiagnostic(Diagnostic.Create(UniquePriorityRule, location, priority));
+                if (formats.Add($"{prefix}${suffix}") || parent) continue;
+                if (string.IsNullOrWhiteSpace(prefix))
+                    context.ReportDiagnostic(Diagnostic.Create(DuplicateFormatRule, location, $"Suffix: {suffix}"));
+                else if (string.IsNullOrWhiteSpace(suffix))
+                    context.ReportDiagnostic(Diagnostic.Create(DuplicateFormatRule, location, $"Prefix: {prefix}"));
+                else
+                    context.ReportDiagnostic(Diagnostic.Create(DuplicateFormatRule, location,
+                        $"Prefix: {prefix}, Suffix: {suffix}"));
+            }
+        }
+    }
+
+    private static IEnumerable<EnvironmentValidateSyntax> GetEnvironmentValidate(
+        SyntaxNodeAnalysisContext ctx,
+        CancellationToken ct)
+    {
+        var semanticModel = ctx.SemanticModel;
+        if (ctx.Node is FieldDeclarationSyntax fields)
+        {
+            foreach (var field in fields.Declaration.Variables)
+            {
+                var symbol = semanticModel.GetDeclaredSymbol(field, ct);
+                if (symbol is null) continue;
+                List<(bool parent, AttributeData attr)> formats = [];
+                var currentSymbol = symbol.ContainingSymbol;
+                while (currentSymbol is not null)
+                {
+                    formats.AddRange(
+                        GetFromSymbol(currentSymbol, semanticModel, ct).Select(static attr => (true, attr)));
+                    currentSymbol = currentSymbol.ContainingSymbol;
+                }
+
+                formats.AddRange(GetFromSymbol(symbol, semanticModel, ct).Select(static attr => (false, attr)));
+                yield return new EnvironmentValidateSyntax(formats);
+            }
+        }
+        else
+        {
+            var symbol = semanticModel.GetDeclaredSymbol(ctx.Node, ct);
+            if (symbol is null) yield break;
+            List<(bool parent, AttributeData attr)> formats = [];
+            var currentSymbol = symbol.ContainingSymbol;
+            while (currentSymbol is not null)
+            {
+                formats.AddRange(GetFromSymbol(currentSymbol, semanticModel, ct).Select(static attr => (true, attr)));
+                currentSymbol = currentSymbol.ContainingSymbol;
+            }
+
+            formats.AddRange(GetFromSymbol(symbol, semanticModel, ct).Select(static attr => (false, attr)));
+            yield return new EnvironmentValidateSyntax(formats);
+        }
+
+        yield break;
+
+        static List<AttributeData> GetFromSymbol(ISymbol symbol, SemanticModel model,
+            CancellationToken ct)
+        {
+            const string envNameFormatName = "EnvironmentVariableNameFormatAttribute";
+            return symbol.GetAttributes()
+                .Where(static attr => attr.AttributeClass?.ToDisplayString().Contains(envNameFormatName) ?? false)
+                .Where(a => a is not null)
+                .Select(a => a!)
+                .ToList();
         }
     }
 
@@ -74,31 +134,11 @@ public class EnvironmentFormatAnalyzer : DiagnosticAnalyzer
         return !string.IsNullOrWhiteSpace(prefix) || !string.IsNullOrWhiteSpace(suffix);
     }
 
-
-    private static List<(bool Parent, AttributeData AttributeData)> GetEnvNameFormatAttributes(ISymbol symbol,
-        CancellationToken ct)
+    private readonly record struct EnvironmentValidateSyntax(
+        List<(bool parent, AttributeData attr)> Formats)
     {
-        List<(bool Parent, AttributeData AttributeData)> attrs = [];
-        var current = symbol.ContainingSymbol;
-        while (current is not null)
-        {
-            attrs.AddRange(GetFromSymbol(current).Select(attr => (true, attr)));
-            current = current.ContainingSymbol;
-        }
-
-        attrs.AddRange(GetFromSymbol(symbol).Select(attr => (false, attr)));
-        return attrs;
-
-        static IEnumerable<AttributeData> GetFromSymbol(ISymbol symbol)
-        {
-            const string envNameFormatName = "EnvironmentVariableNameFormatAttribute";
-            return symbol.GetAttributes()
-                .Where(static attr => attr.AttributeClass?.ToDisplayString().Contains(envNameFormatName) ?? false)
-                .Where(a => a is not null)
-                .Select(a => a!);
-        }
+        public List<(bool parent, AttributeData attr)> Formats { get; } = Formats;
     }
-
 
     #region NG001
 

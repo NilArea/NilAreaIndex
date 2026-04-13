@@ -207,13 +207,12 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
                 var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
                 if (attrs.Count == 0) continue;
                 List<AttributeData> formats = [];
-                SyntaxNode? current = field;
-                while (current is not null)
+                while (symbol is not null)
                 {
                     formats.AddRange(GetEnvNameFormatAttributes(symbol, semanticModel, ct));
-                    current = current.Parent;
                     symbol = symbol.ContainingSymbol;
                 }
+
                 foreach (var attr in attrs)
                     yield return new EnvironmentValidateSyntax(attr, formats);
             }
@@ -225,13 +224,12 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
             var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
             if (attrs.Count == 0) yield break;
             List<AttributeData> formats = [];
-            var current = ctx.Node;
-            while (current is not null)
+            while (symbol is not null)
             {
                 formats.AddRange(GetEnvNameFormatAttributes(symbol, semanticModel, ct));
-                current = current.Parent;
                 symbol = symbol.ContainingSymbol;
             }
+
             foreach (var attr in attrs)
                 yield return new EnvironmentValidateSyntax(attr, formats);
         }
