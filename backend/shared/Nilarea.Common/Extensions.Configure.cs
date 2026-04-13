@@ -42,7 +42,7 @@ public static partial class Extensions
         public string GetSecretFromFile(string key, string defaultSuffix = "_FILE")
         {
             var secret = configuration[key];
-            if (string.IsNullOrWhiteSpace(secret)) return secret;
+            if (!string.IsNullOrWhiteSpace(secret)) return secret;
             var path = configuration[key + defaultSuffix];
             if (string.IsNullOrWhiteSpace(path))
                 throw new KeyNotFoundException($"\"{key}\" is a required configure key");

@@ -59,6 +59,7 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
         writer.WriteLine("internal static partial class NilareaGenerator");
         writer.WriteLine("{");
         writer.Indent++;
+        writer.WriteLine("[System.Runtime.CompilerServices.ModuleInitializer]");
         writer.WriteLine("public static void ValidateEnvironmentVariables()");
         writer.WriteLine("{");
         writer.Indent++;
@@ -113,6 +114,7 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
             }
             else
             {
+                writer.WriteLine($"System.Environment.SetEnvironmentVariable(\"{envName}\", \"{envDefaultValue}\");");
                 writer.WriteLine(
                     $"Console.Error.WriteLine(\"{string.Format(UseDefaultMessage.ToString(), envName, envDefaultValue)}\");");
             }
@@ -168,6 +170,7 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
             }
             else
             {
+                writer.WriteLine($"System.Environment.SetEnvironmentVariable(\"{envName}\", \"{envDefaultValue}\");");
                 writer.WriteLine(
                     $"Console.Error.WriteLine(\"{string.Format(UseDefaultMessage.ToString(), envName, envDefaultValue)}\");");
             }

@@ -6,7 +6,7 @@ using Orleans.Dashboard;
 
 namespace NilArea.Account;
 
-public partial class Program
+public class Program
 {
     private static async Task Main(string[] args)
     {

@@ -7,7 +7,7 @@ using Orleans.Dashboard;
 
 namespace NilArea.Blog;
 
-public partial class Program
+public class Program
 {
     private static async Task Main(string[] args)
     {

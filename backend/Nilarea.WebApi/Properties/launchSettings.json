@@ -8,8 +8,7 @@
       "applicationUrl": "http://localhost:5927",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "CLUSTER_ID": "nilarea-cluster",
-        "REDIS_CLUSTER": "127.0.0.1:6379,password=1241936d,allowAdmin=false"
+        "REDIS_CLUSTER_FILE": "/home/qianxi/source/repos/Web/nilarea/backend/services/secrets/redis_connection_string"
       }
     },
     "https": {
@@ -19,8 +18,7 @@
       "applicationUrl": "https://localhost:15927;http://localhost:5927",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "CLUSTER_ID": "nilarea-cluster",
-        "REDIS_CLUSTER": "127.0.0.1:6379,password=1241936d,allowAdmin=false"
+        "REDIS_CLUSTER_FILE": "/home/qianxi/source/repos/Web/nilarea/backend/services/secrets/redis_connection_string"
       }
     }
   }

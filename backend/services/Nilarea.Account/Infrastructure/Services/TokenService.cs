@@ -50,8 +50,9 @@ public interface ITokenService
 [EnvironmentVariableNameFormat(Suffix = "_FILE")]
 public class TokenService(IConfiguration configuration) : ITokenService
 {
+    [RequireEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRY_MINUTES", DefaultValue = "15")]
     private readonly int _accessTokenExpiryMinutes =
-        int.Parse(configuration["JWT_ACCESS_TOKEN_EXPIRY_MINUTES"] ?? "15");
+        configuration.SafeGetConfigureValue("JWT_ACCESS_TOKEN_EXPIRY_MINUTES", 15);
 
     [RequireEnvironmentVariable("JWT_AUDIENCE", ErrorMessage = "Jwt:Audience is required")]
     private readonly string _audience = configuration.GetSecretFromFile("JWT_AUDIENCE");
