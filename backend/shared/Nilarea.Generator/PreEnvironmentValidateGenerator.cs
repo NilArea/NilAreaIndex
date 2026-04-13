@@ -198,118 +198,48 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
         CancellationToken ct)
     {
         var semanticModel = ctx.SemanticModel;
-        switch (ctx.Node)
+        if (ctx.Node is FieldDeclarationSyntax fields)
         {
-            case ClassDeclarationSyntax @class:
+            foreach (var field in fields.Declaration.Variables)
             {
-                if (semanticModel.GetDeclaredSymbol(@class, ct) is not INamedTypeSymbol symbol)
-                    yield break;
+                var symbol = semanticModel.GetDeclaredSymbol(field, ct);
+                if (symbol is null) continue;
                 var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
-                if (attrs.Count == 0) yield break;
-                var formats = GetEnvNameFormatAttributes(symbol, semanticModel, ct);
+                if (attrs.Count == 0) continue;
+                List<AttributeData> formats = [];
+                SyntaxNode? current = field;
+                while (current is not null)
+                {
+                    formats.AddRange(GetEnvNameFormatAttributes(symbol, semanticModel, ct));
+                    current = current.Parent;
+                    symbol = symbol.ContainingSymbol;
+                }
                 foreach (var attr in attrs)
                     yield return new EnvironmentValidateSyntax(attr, formats);
-                break;
             }
-            case StructDeclarationSyntax @struct:
+        }
+        else
+        {
+            var symbol = semanticModel.GetDeclaredSymbol(ctx.Node, ct);
+            if (symbol is null) yield break;
+            var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
+            if (attrs.Count == 0) yield break;
+            List<AttributeData> formats = [];
+            var current = ctx.Node;
+            while (current is not null)
             {
-                if (semanticModel.GetDeclaredSymbol(@struct, ct) is not INamedTypeSymbol symbol)
-                    yield break;
-                var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
-                if (attrs.Count == 0) yield break;
-                var formats = GetEnvNameFormatAttributes(symbol, semanticModel, ct);
-                foreach (var attr in attrs)
-                    yield return new EnvironmentValidateSyntax(attr, formats);
-                break;
+                formats.AddRange(GetEnvNameFormatAttributes(symbol, semanticModel, ct));
+                current = current.Parent;
+                symbol = symbol.ContainingSymbol;
             }
-            case FieldDeclarationSyntax fields:
-            {
-                foreach (var field in fields.Declaration.Variables)
-                {
-                    if (semanticModel.GetDeclaredSymbol(field, ct) is not IFieldSymbol symbol)
-                        continue;
-                    var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
-                    if (attrs.Count == 0) continue;
-                    var fieldFormats = GetEnvNameFormatAttributes(symbol, semanticModel, ct);
-                    var typeFormats = GetEnvNameFormatAttributes(symbol.ContainingType, semanticModel, ct);
-                    var allFormats = typeFormats.Concat(fieldFormats).ToList();
-                    foreach (var attr in attrs)
-                        yield return new EnvironmentValidateSyntax(attr, allFormats);
-                }
-
-                break;
-            }
-            case PropertyDeclarationSyntax property:
-            {
-                if (semanticModel.GetDeclaredSymbol(property, ct) is not IPropertySymbol symbol)
-                    yield break;
-                var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
-                if (attrs.Count == 0) yield break;
-                var propertyFormats = GetEnvNameFormatAttributes(symbol, semanticModel, ct);
-                var typeFormats = GetEnvNameFormatAttributes(symbol.ContainingType, semanticModel, ct);
-                var allFormats = typeFormats.Concat(propertyFormats).ToList();
-                foreach (var attr in attrs)
-                    yield return new EnvironmentValidateSyntax(attr, allFormats);
-                break;
-            }
-            case MethodDeclarationSyntax method:
-            {
-                if (semanticModel.GetDeclaredSymbol(method, ct) is not IMethodSymbol symbol)
-                    yield break;
-                var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
-                if (attrs.Count == 0) yield break;
-                var methodFormats = GetEnvNameFormatAttributes(symbol, semanticModel, ct);
-                var typeFormats = GetEnvNameFormatAttributes(symbol.ContainingType, semanticModel, ct);
-                var allFormats = typeFormats.Concat(methodFormats).ToList();
-                foreach (var attr in attrs)
-                    yield return new EnvironmentValidateSyntax(attr, allFormats);
-                break;
-            }
-            case LocalFunctionStatementSyntax local:
-            {
-                if (semanticModel.GetDeclaredSymbol(local, ct) is not IMethodSymbol symbol)
-                    yield break;
-                var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
-                if (attrs.Count == 0) yield break;
-                var methodFormats = GetEnvNameFormatAttributes(symbol, semanticModel, ct);
-                var typeFormats = GetEnvNameFormatAttributes(symbol.ContainingType, semanticModel, ct);
-                var allFormats = typeFormats.Concat(methodFormats).ToList();
-                foreach (var attr in attrs)
-                    yield return new EnvironmentValidateSyntax(attr, allFormats);
-                break;
-            }
-            case ParameterSyntax param:
-            {
-                if (semanticModel.GetDeclaredSymbol(param, ct) is not IParameterSymbol symbol)
-                    yield break;
-                var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
-                if (attrs.Count == 0) yield break;
-                var paramFormats = GetEnvNameFormatAttributes(symbol, semanticModel, ct);
-                List<AttributeData> allFormats;
-                if (symbol.ContainingSymbol is IMethodSymbol)
-                {
-                    var methodFormats = GetEnvNameFormatAttributes(symbol.ContainingSymbol, semanticModel, ct);
-                    var typeFormats = GetEnvNameFormatAttributes(symbol.ContainingType, semanticModel, ct);
-                    allFormats = typeFormats.Concat(methodFormats).Concat(paramFormats).ToList();
-                }
-                else
-                {
-                    var typeFormats = GetEnvNameFormatAttributes(symbol.ContainingType, semanticModel, ct);
-                    allFormats = typeFormats.Concat(paramFormats).ToList();
-                }
-
-                foreach (var attr in attrs)
-                    yield return new EnvironmentValidateSyntax(attr, allFormats);
-                break;
-            }
+            foreach (var attr in attrs)
+                yield return new EnvironmentValidateSyntax(attr, formats);
         }
     }
 
     private static List<AttributeData> GetRequireEnvAttributes(ISymbol symbol, SemanticModel model,
         CancellationToken ct)
     {
-        if (symbol is ITypeSymbol { TypeKind: TypeKind.Extension })
-            symbol = symbol.ContainingType;
         return symbol.GetAttributes()
             .Where(static attr => attr.AttributeClass?.ToDisplayString().Contains(RequireEnvName) ?? false)
             .Where(a => a is not null)
@@ -320,8 +250,6 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
     private static List<AttributeData> GetEnvNameFormatAttributes(ISymbol symbol, SemanticModel model,
         CancellationToken ct)
     {
-        if (symbol is ITypeSymbol { TypeKind: TypeKind.Extension })
-            symbol = symbol.ContainingType;
         return symbol.GetAttributes()
             .Where(static attr => attr.AttributeClass?.ToDisplayString().Contains(EnvNameFormatName) ?? false)
             .Where(a => a is not null)
