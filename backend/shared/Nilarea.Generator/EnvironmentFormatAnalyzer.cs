@@ -71,39 +71,27 @@ public class EnvironmentFormatAnalyzer : DiagnosticAnalyzer
                 suffix = suffixValue;
         }
 
-        if (string.IsNullOrWhiteSpace(prefix) && string.IsNullOrWhiteSpace(suffix)) return false;
-        return true;
+        return !string.IsNullOrWhiteSpace(prefix) || !string.IsNullOrWhiteSpace(suffix);
     }
 
 
     private static List<(bool Parent, AttributeData AttributeData)> GetEnvNameFormatAttributes(ISymbol symbol,
         CancellationToken ct)
     {
-        const string envNameFormatName = "EnvironmentVariableNameFormatAttribute";
-        switch (symbol)
+        List<(bool Parent, AttributeData AttributeData)> attrs = [];
+        var current = symbol.ContainingSymbol;
+        while (current is not null)
         {
-            case ITypeSymbol:
-                return GetFromSymbol(symbol).Select(static attr => (false, attr)).ToList();
-            case IFieldSymbol or IPropertySymbol or IMethodSymbol:
-                return GetFromSymbol(symbol.ContainingType).Select(static attr => (true, attr))
-                    .Concat(GetFromSymbol(symbol).Select(static attr => (false, attr))).ToList();
-            case IParameterSymbol:
-                if (symbol.ContainingSymbol is IMethodSymbol)
-                    return GetFromSymbol(symbol.ContainingType).Select(static attr => (true, attr))
-                        .Concat(GetFromSymbol(symbol.ContainingSymbol).Select(static attr => (true, attr)))
-                        .Concat(GetFromSymbol(symbol).Select(static attr => (false, attr)))
-                        .ToList();
-                return GetFromSymbol(symbol.ContainingType).Select(static attr => (true, attr))
-                    .Concat(GetFromSymbol(symbol).Select(static attr => (false, attr)))
-                    .ToList();
-            default:
-                return [];
+            attrs.AddRange(GetFromSymbol(current).Select(attr => (true, attr)));
+            current = current.ContainingSymbol;
         }
+
+        attrs.AddRange(GetFromSymbol(symbol).Select(attr => (false, attr)));
+        return attrs;
 
         static IEnumerable<AttributeData> GetFromSymbol(ISymbol symbol)
         {
-            if (symbol is ITypeSymbol { TypeKind: TypeKind.Extension })
-                symbol = symbol.ContainingType;
+            const string envNameFormatName = "EnvironmentVariableNameFormatAttribute";
             return symbol.GetAttributes()
                 .Where(static attr => attr.AttributeClass?.ToDisplayString().Contains(envNameFormatName) ?? false)
                 .Where(a => a is not null)

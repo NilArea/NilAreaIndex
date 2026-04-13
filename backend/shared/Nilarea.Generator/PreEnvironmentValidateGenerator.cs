@@ -190,7 +190,8 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
             or FieldDeclarationSyntax
             or PropertyDeclarationSyntax
             or MethodDeclarationSyntax
-            or ParameterSyntax;
+            or ParameterSyntax
+            or LocalFunctionStatementSyntax;
     }
 
     private static IEnumerable<EnvironmentValidateSyntax?> GetEnvironmentValidate(GeneratorSyntaxContext ctx,
@@ -254,6 +255,19 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
             case MethodDeclarationSyntax method:
             {
                 if (semanticModel.GetDeclaredSymbol(method, ct) is not IMethodSymbol symbol)
+                    yield break;
+                var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
+                if (attrs.Count == 0) yield break;
+                var methodFormats = GetEnvNameFormatAttributes(symbol, semanticModel, ct);
+                var typeFormats = GetEnvNameFormatAttributes(symbol.ContainingType, semanticModel, ct);
+                var allFormats = typeFormats.Concat(methodFormats).ToList();
+                foreach (var attr in attrs)
+                    yield return new EnvironmentValidateSyntax(attr, allFormats);
+                break;
+            }
+            case LocalFunctionStatementSyntax local:
+            {
+                if (semanticModel.GetDeclaredSymbol(local, ct) is not IMethodSymbol symbol)
                     yield break;
                 var attrs = GetRequireEnvAttributes(symbol, semanticModel, ct);
                 if (attrs.Count == 0) yield break;
