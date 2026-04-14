@@ -8,19 +8,19 @@ namespace NilArea.Contracts.Exceptions;
 [Alias("NilArea.Contracts.Exceptions.AuthenticationException")]
 public class AuthenticationException : OrleansException
 {
-    public AuthenticationException(AuthenticationResult result = AuthenticationResult.Default)
+    public AuthenticationException(AuthenticationResult result = AuthenticationResult.BadRequest)
     {
         Result = result;
     }
 
-    public AuthenticationException(string message, AuthenticationResult result = AuthenticationResult.Default) :
+    public AuthenticationException(string message, AuthenticationResult result = AuthenticationResult.BadRequest) :
         base(message)
     {
         Result = result;
     }
 
     public AuthenticationException(string message, Exception innerException,
-        AuthenticationResult result = AuthenticationResult.Default) : base(message, innerException)
+        AuthenticationResult result = AuthenticationResult.BadRequest) : base(message, innerException)
     {
         Result = result;
     }

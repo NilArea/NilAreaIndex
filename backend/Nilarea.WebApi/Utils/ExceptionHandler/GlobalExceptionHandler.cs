@@ -26,9 +26,8 @@ public class GlobalExceptionHandler(
             Exception = exception,
             ProblemDetails = new ProblemDetails
             {
-                Type = exception.GetType().Name,
                 Title = "An Error Occured",
-                Detail = exception.Message
+                Status = StatusCodes.Status400BadRequest
             }
         });
     }

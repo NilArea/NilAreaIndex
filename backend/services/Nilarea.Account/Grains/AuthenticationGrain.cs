@@ -33,20 +33,20 @@ public sealed class AuthenticationGrain(
         {
             logger.LogWarning("Login validation failed for email: {Email}, errors: {Errors}", command.Email,
                 validate.ToString());
-            throw new AuthenticationException(validate.ToString(), AuthenticationResult.Failed);
+            throw new AuthenticationException(validate.ToString());
         }
 
         if (!await accountRepository.ExistsAccountAsync(command.Email))
         {
             logger.LogWarning("Login failed: Email not registered: {Email}", command.Email);
-            throw new AuthenticationException("Email is not registered", AuthenticationResult.Failed);
+            throw new AuthenticationException("Email is not registered", AuthenticationResult.Unauthorized);
         }
 
         var add = await confirmRepository.GetAccountVerifyAsync(command.Email);
         if (!passwordHasher.Verify(command.Password, add.PasswordSaltHash))
         {
             logger.LogWarning("Login failed: Password does not match for email: {Email}", command.Email);
-            throw new AuthenticationException("Password does not match", AuthenticationResult.Failed);
+            throw new AuthenticationException("Password does not match", AuthenticationResult.Unauthorized);
         }
 
         // 生成访问令牌和刷新令牌
@@ -93,7 +93,7 @@ public sealed class AuthenticationGrain(
         if (!await tokenRepository.ValidateRefreshTokenAsync(userId, refreshToken, true))
         {
             logger.LogWarning("Refresh token validation failed for UserId: {UserId}", userId);
-            throw new AuthenticationException("Invalid refresh token", AuthenticationResult.Failed);
+            throw new AuthenticationException("Invalid refresh token");
         }
 
         // 获取用户信息
@@ -101,7 +101,7 @@ public sealed class AuthenticationGrain(
         if (account == null)
         {
             logger.LogWarning("User not found for UserId: {UserId}", userId);
-            throw new AuthenticationException("User not found", AuthenticationResult.Failed);
+            throw new AuthenticationException("User not found", AuthenticationResult.Unauthorized);
         }
 
         // 生成访问令牌和刷新令牌

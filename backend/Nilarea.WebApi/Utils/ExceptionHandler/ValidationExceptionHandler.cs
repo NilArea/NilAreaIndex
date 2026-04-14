@@ -27,7 +27,7 @@ public class ValidationExceptionHandler(
             Exception = exception,
             ProblemDetails = new ProblemDetails
             {
-                Detail = "One or more Validation Errors occurred.",
+                Title = "One or more Validation Errors occurred.",
                 Status = StatusCodes.Status400BadRequest
             }
         };

@@ -18,11 +18,6 @@ public sealed class ConfirmRepository(
 ) : IConfirmRepository
 {
     /// <summary>
-    ///     验证码缓存键前缀
-    /// </summary>
-    private static RedisKey ConfirmKeyPrefix => "NA:CK";
-
-    /// <summary>
     ///     根据邮箱查找账号的验证密钥
     /// </summary>
     /// <param name="email">邮箱</param>
@@ -35,7 +30,7 @@ public sealed class ConfirmRepository(
                      .Where(au => au.Email == email && au.DeleteAt == null)
                      .Select(au => new { au.UserId, au.PasswordSaltHash })
                      .FirstOrDefaultAsync() ??
-                 throw new AuthenticationException("Email does not registered", AuthenticationResult.Failed);
+                 throw new AuthenticationException("Email does not registered", AuthenticationResult.Unauthorized);
         return (up.UserId, up.PasswordSaltHash);
     }
 
@@ -55,8 +50,9 @@ public sealed class ConfirmRepository(
             else
                 redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
                 return 'ok'
+            end
             """;
-        var keys = new[] { ConfirmKeyPrefix.Append(unique) };
+        var keys = new[] { GetConfirmKey(unique) };
         var args = new RedisValue[] { code, GetExpirationTime().TotalSeconds };
         var result = await redisClientFactory.GetDefaultRedisDatabase().Database
             .ScriptEvaluateAsync(luaScript, keys, args);
@@ -89,7 +85,7 @@ public sealed class ConfirmRepository(
     /// <returns>验证码是否存在</returns>
     public async ValueTask<bool> ExistConfirmCodeAsync(string unique)
     {
-        var rk = ConfirmKeyPrefix.Append(unique);
+        var rk = GetConfirmKey(unique);
         return await redisClientFactory.GetDefaultRedisDatabase().Database.KeyExistsAsync(rk);
     }
 
@@ -102,13 +98,13 @@ public sealed class ConfirmRepository(
     /// <exception cref="AccountException">验证码已过期或不正确时抛出</exception>
     public async ValueTask CheckConfirmCodeAsync(string unique, string code)
     {
-        var rk = ConfirmKeyPrefix.Append(unique);
+        var rk = GetConfirmKey(unique);
         const string script =
             """
             local current = redis.call('GET', KEYS[1])
             if current == nil then
                 return 'expired'
-            if current == ARGV[1] then
+            elseif current == ARGV[1] then
                 redis.call('DEL', KEYS[1])
                 return 'success'
             else
@@ -128,5 +124,10 @@ public sealed class ConfirmRepository(
             default:
                 throw new ConfirmException("Check confirm code failed");
         }
+    }
+
+    private static RedisKey GetConfirmKey(string unique)
+    {
+        return $"NA:CC:{{{unique}}}";
     }
 }

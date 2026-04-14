@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using NilArea.Contracts.Enums;
 using NilArea.Contracts.Exceptions;
 
 namespace NilArea.Web.Utils.ExceptionHandler;
@@ -20,12 +19,31 @@ public class OrleansExceptionHandler(
 
         var context = oe switch
         {
-            AccountException ae => HandleAccountException(httpContext, ae),
+            AccountException ace => HandleAccountException(httpContext, ace),
             AuthenticationException aue => HandleAuthenticationException(httpContext, aue),
+            ConfirmException cce => HandleConfirmException(httpContext, cce),
             _ => HandleDefaultException(httpContext, oe)
         };
 
         return await problemDetailsService.TryWriteAsync(context);
+    }
+
+    private ProblemDetailsContext HandleConfirmException(HttpContext httpContext, ConfirmException exception)
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        var context = new ProblemDetailsContext
+        {
+            HttpContext = httpContext,
+            Exception = exception,
+            ProblemDetails = new ProblemDetails
+            {
+                Title = "Invalid Confirm Code",
+                Status = StatusCodes.Status400BadRequest,
+                Detail = exception.Message,
+                Instance = httpContext.Request.Path
+            }
+        };
+        return context;
     }
 
     /// <summary>
@@ -42,7 +60,7 @@ public class OrleansExceptionHandler(
             Exception = exception,
             ProblemDetails = new ProblemDetails
             {
-                Title = "An server error occurred",
+                Title = "An Error Occured",
                 Status = StatusCodes.Status500InternalServerError
             }
         };
@@ -63,7 +81,7 @@ public class OrleansExceptionHandler(
             Exception = exception,
             ProblemDetails = new ProblemDetails
             {
-                Title = exception.Message,
+                Title = "Invalid Account Request",
                 Status = StatusCodes.Status400BadRequest
             }
         };
@@ -77,22 +95,15 @@ public class OrleansExceptionHandler(
         HttpContext httpContext,
         AuthenticationException exception)
     {
-        var code = exception.Result switch
-        {
-            AuthenticationResult.Failed => StatusCodes.Status400BadRequest,
-            AuthenticationResult.Unauthorized => StatusCodes.Status401Unauthorized,
-            AuthenticationResult.Forbidden => StatusCodes.Status403Forbidden,
-            _ => StatusCodes.Status500InternalServerError
-        };
-        httpContext.Response.StatusCode = code;
+        httpContext.Response.StatusCode = (int)exception.Result;
         var context = new ProblemDetailsContext
         {
             HttpContext = httpContext,
             Exception = exception,
             ProblemDetails = new ProblemDetails
             {
-                Title = exception.Message,
-                Status = code
+                Title = "Failed to Authenticate",
+                Status = (int)exception.Result
             }
         };
         return context;

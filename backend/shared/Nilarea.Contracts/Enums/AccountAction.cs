@@ -7,6 +7,5 @@ public enum AccountAction
     Register,
     Delete,
     ChangePassword,
-    ChangeEmail,
-    Update
+    ChangeEmail
 }
