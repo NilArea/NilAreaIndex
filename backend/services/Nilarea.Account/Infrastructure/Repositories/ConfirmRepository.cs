@@ -55,13 +55,29 @@ public sealed class ConfirmRepository(
     /// <param name="unique">唯一标识（通常是邮箱）</param>
     /// <param name="code">验证码</param>
     /// <param name="typeCode">验证码类型</param>
-    /// <returns>是否缓存成功</returns>
-    public async ValueTask<bool> CacheConfirmCodeAsync(string unique, string code, ConfirmType typeCode)
+    public async ValueTask CacheConfirmCodeAsync(string unique, string code, ConfirmType typeCode)
     {
-        var rk = ConfirmKeyPrefix.Append(unique);
-        if (await redisDatabase.Database.KeyExistsAsync(rk)) return false;
-        await redisDatabase.Database.StringSetAsync(rk, code, GetExpirationTime());
-        return true;
+        const string luaScript =
+            """
+            local current = redis.call('GET', KEYS[1])
+            if current == ARGV[1] then
+                return 'exist'
+            else
+                redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[2])
+                return 'ok'
+            """;
+        var keys = new[] { ConfirmKeyPrefix.Append(unique) };
+        var args = new RedisValue[] { code, GetExpirationTime().TotalSeconds };
+        var result = await redisDatabase.Database.ScriptEvaluateAsync(luaScript, keys, args);
+        switch (result.ToString())
+        {
+            case "ok":
+                return;
+            case "exist":
+                throw new ConfirmException("Confirm code already exists");
+            default:
+                throw new ConfirmException("Cache confirm code failed");
+        }
 
         TimeSpan GetExpirationTime()
         {
@@ -93,25 +109,32 @@ public sealed class ConfirmRepository(
     /// <param name="code">验证码</param>
     /// <returns>验证码是否正确</returns>
     /// <exception cref="AccountException">验证码已过期或不正确时抛出</exception>
-    public async ValueTask<bool> CheckConfirmCodeAsync(string unique, string code)
+    public async ValueTask CheckConfirmCodeAsync(string unique, string code)
     {
         var rk = ConfirmKeyPrefix.Append(unique);
-        if (!await redisDatabase.Database.KeyExistsAsync(rk))
-            throw new AccountException("Verification code has expired");
-
         const string script =
             """
             local current = redis.call('GET', KEYS[1])
+            if current == nil then
+                return 'expired'
             if current == ARGV[1] then
                 redis.call('DEL', KEYS[1])
-                return 1
+                return 'success'
             else
-                return 0
+                return 'incorrect'
             end
             """;
-        var ret = await redisDatabase.Database.ScriptEvaluateAsync(script, [rk], [code]);
-        if (ret.IsNull) return false;
-        var result = (bool)ret;
-        return !result ? throw new AccountException("Verification code is incorrect") : result;
+        var result = await redisDatabase.Database.ScriptEvaluateAsync(script, [rk], [code]);
+        switch (result.ToString())
+        {
+            case "expired":
+                throw new ConfirmException("Confirm key has expired");
+            case "success":
+                return;
+            case "incorrect":
+                throw new ConfirmException("Confirm key is incorrect");
+            default:
+                throw new ConfirmException("Check confirm code failed");
+        }
     }
 }

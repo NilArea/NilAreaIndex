@@ -41,13 +41,9 @@ public class AccountGrain(
     public async ValueTask<bool> ExistAccountAsync(string email)
     {
         var validate = await EmailValidator.ValidateAsync(email);
-        if (!validate.IsValid)
-        {
-            logger.LogWarning("Email validation failed: {Email}, errors: {Errors}", email, validate.ToString());
-            throw new AccountException(validate.ToString());
-        }
-
-        return await accountRepository.ExistsAccountAsync(email);
+        if (validate.IsValid) return await accountRepository.ExistsAccountAsync(email);
+        logger.LogWarning("Email validation failed: {Email}, errors: {Errors}", email, validate.ToString());
+        throw new AccountException(validate.ToString());
     }
 
     public async ValueTask CallConfirmKeyAsync(string email, ConfirmType typeCode = ConfirmType.Default)
@@ -56,35 +52,17 @@ public class AccountGrain(
         if (!validate.IsValid)
         {
             logger.LogWarning("Email validation failed: {Email}, errors: {Errors}", email, validate.ToString());
-            throw new AccountException(validate.ToString());
-        }
-        logger.LogDebug("Sending confirm key to email: {Email}, type: {TypeCode}", email, typeCode);
-        // 添加发送频率限制
-        var rateLimitKey = $"rate_limit:confirm_key:{email}";
-        if (await confirmRepository.ExistConfirmCodeAsync(rateLimitKey))
-        {
-            logger.LogWarning("Rate limit exceeded for email: {Email}", email);
-            throw new AccountException("Please wait before requesting another verification code");
+            throw new ConfirmException(validate.ToString());
         }
 
         var confirmCode = Random.Shared.GetHexString(6);
-        if (!await confirmRepository.CacheConfirmCodeAsync(email, confirmCode, typeCode))
-        {
-            logger.LogError("Failed to cache confirm code for email: {Email}", email);
-            throw new AccountException("Failed to cache confirm code");
-        }
-
+        await confirmRepository.CacheConfirmCodeAsync(email, confirmCode, typeCode);
         if (!await emailServices.SendConfirmKeyAsync(email, confirmCode, typeCode))
         {
             logger.LogError("Failed to send confirm key to email: {Email}", email);
             await confirmRepository.CheckConfirmCodeAsync(email, confirmCode);
-            throw new AccountException("Failed to send confirm key");
+            throw new ConfirmException("Failed to send confirm key");
         }
-
-        // 设置频率限制，1分钟内不能再次发送
-        await confirmRepository.CacheConfirmCodeAsync(rateLimitKey, "1", ConfirmType.Default);
-
-        logger.LogDebug("Confirm key sent successfully to email: {Email}", email);
     }
 
     public async ValueTask<RegisterAccountResponse> RegisterUserAsync(RegisterAccountCommand command)
@@ -105,12 +83,7 @@ public class AccountGrain(
             throw new AccountException("Email already registered", AccountAction.Register);
         }
 
-        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey))
-        {
-            logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
-            throw new AccountException("Confirm Code is invalid", AccountAction.Register);
-        }
-
+        await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey);
         var add = await accountRepository.InsertAccountAsync(
             command.Email,
             passwordHasher.SaltedHash(command.Password),
@@ -148,12 +121,7 @@ public class AccountGrain(
         }
 
         // 验证确认码
-        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey))
-        {
-            logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
-            throw new AccountException("Confirm Code is invalid");
-        }
-
+        await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey);
         // 删除账号
         await accountRepository.DeleteAccountAsync(accountVerify.UserId);
 
@@ -181,12 +149,7 @@ public class AccountGrain(
         }
 
         // 验证确认码
-        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey))
-        {
-            logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
-            throw new AccountException("Confirm Code is invalid");
-        }
-
+        await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey);
         // 修改密码
         await accountRepository.ChangePasswordAsync(accountVerify.UserId,
             passwordHasher.SaltedHash(command.NewPassword));
@@ -250,11 +213,7 @@ public class AccountGrain(
             throw new AccountException(validate.ToString());
         }
 
-        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey))
-        {
-            logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
-            throw new AccountException("Confirm Code is invalid");
-        }
+        await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey);
 
         var account = await accountRepository.GetAccountByEmailAsync(command.Email);
         if (account == null)

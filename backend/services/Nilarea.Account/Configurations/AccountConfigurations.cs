@@ -74,7 +74,7 @@ public static class AccountConfigurations
                 .AddAsyncLifetimeSingleton<IConfirmRepository, ConfirmRepository>()
                 .AddAsyncLifetimeSingleton<IEmailServices, EmailServices>()
                 .AddAsyncLifetimeSingleton<ITokenService, TokenService>()
-                .AddAsyncLifetimeSingleton<ITokenStorageService, TokenStorageService>()
+                .AddAsyncLifetimeSingleton<ITokenRepository, TokenRepository>()
                 .AddHostedService<ServiceInitializer>();
             return collection;
         }

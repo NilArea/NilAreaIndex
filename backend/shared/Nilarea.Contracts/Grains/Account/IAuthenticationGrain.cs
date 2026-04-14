@@ -30,9 +30,9 @@ public interface IAuthenticationGrain : IGrainWithIntegerKey
     /// <summary>
     ///     验证访问令牌
     /// </summary>
-    /// <param name="token">访问令牌</param>
+    /// <param name="accessToken">访问令牌</param>
     /// <returns>令牌是否有效</returns>
-    ValueTask<bool> ValidateTokenAsync(string token);
+    ValueTask<bool> ValidateAccessTokenAsync(string accessToken);
 
     /// <summary>
     ///     用户登出

@@ -18,10 +18,10 @@ public sealed class AuthenticationGrain(
     ILogger<AuthenticationGrain> logger,
     IAccountRepository accountRepository,
     IConfirmRepository confirmRepository,
+    ITokenRepository tokenRepository,
     IValidator<LoginAccountCommand> loginRequestValidator,
     IPasswordHasher passwordHasher,
-    ITokenService tokenService,
-    ITokenStorageService tokenStorageService
+    ITokenService tokenService
 ) : Grain, IAuthenticationGrain
 {
     public async ValueTask<LoginAccountResponse> LoginAsync(LoginAccountCommand command)
@@ -50,12 +50,11 @@ public sealed class AuthenticationGrain(
         }
 
         // 生成访问令牌和刷新令牌
-        var accessToken = tokenService.GenerateAccessToken(add.UserId, command.Email);
-        var refreshToken = tokenService.GenerateRefreshToken();
-        var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+        var (accessToken, accessTokenExpiry) = tokenService.GenerateAccessToken(add.UserId, command.Email);
+        var (refreshToken, refreshTokenExpiry) = tokenService.GenerateRefreshToken();
 
         // 存储刷新令牌
-        await tokenStorageService.StoreRefreshTokenAsync(add.UserId, refreshToken, refreshTokenExpiry);
+        await tokenRepository.StoreRefreshTokenAsync(add.UserId, refreshToken, refreshTokenExpiry);
 
         logger.LogDebug("Login successful for email: {Email}, UserId: {UserId}", command.Email, add.UserId);
 
@@ -63,19 +62,19 @@ public sealed class AuthenticationGrain(
         {
             UserId = add.UserId,
             AccessToken = accessToken,
-            AccessTokenExpiry = DateTime.UtcNow.AddMinutes(15),
+            AccessTokenExpiry = accessTokenExpiry,
             RefreshToken = refreshToken,
             RefreshTokenExpiry = refreshTokenExpiry
         };
     }
 
-    public async ValueTask<bool> ValidateTokenAsync(string token)
+    public async ValueTask<bool> ValidateAccessTokenAsync(string accessToken)
     {
         logger.LogDebug("Token validation attempt");
 
         try
         {
-            tokenService.ValidateToken(token);
+            tokenService.ValidateAccessToken(accessToken);
             logger.LogDebug("Token validation successful");
             return true;
         }
@@ -91,7 +90,7 @@ public sealed class AuthenticationGrain(
         logger.LogDebug("Refresh token attempt for UserId: {UserId}", userId);
 
         // 验证刷新令牌
-        if (!await tokenStorageService.ValidateRefreshTokenAsync(userId, refreshToken))
+        if (!await tokenRepository.ValidateRefreshTokenAsync(userId, refreshToken, true))
         {
             logger.LogWarning("Refresh token validation failed for UserId: {UserId}", userId);
             throw new AuthenticationException("Invalid refresh token", AuthenticationResult.Failed);
@@ -105,21 +104,17 @@ public sealed class AuthenticationGrain(
             throw new AuthenticationException("User not found", AuthenticationResult.Failed);
         }
 
-        // 生成新的访问令牌和刷新令牌
-        var accessToken = tokenService.GenerateAccessToken(userId, account.Email);
-        var newRefreshToken = tokenService.GenerateRefreshToken();
-        var refreshTokenExpiry = DateTime.UtcNow.AddDays(7);
-
+        // 生成访问令牌和刷新令牌
+        var (accessToken, accessTokenExpiry) = tokenService.GenerateAccessToken(userId, account.Email);
+        var (newRefreshToken, refreshTokenExpiry) = tokenService.GenerateRefreshToken();
         // 存储新的刷新令牌
-        await tokenStorageService.StoreRefreshTokenAsync(userId, newRefreshToken, refreshTokenExpiry);
-
+        await tokenRepository.StoreRefreshTokenAsync(userId, newRefreshToken, refreshTokenExpiry);
         logger.LogDebug("Refresh token successful for UserId: {UserId}, Email: {Email}", userId, account.Email);
-
         return new LoginAccountResponse
         {
             UserId = userId,
             AccessToken = accessToken,
-            AccessTokenExpiry = DateTime.UtcNow.AddMinutes(15),
+            AccessTokenExpiry = accessTokenExpiry,
             RefreshToken = newRefreshToken,
             RefreshTokenExpiry = refreshTokenExpiry
         };
@@ -128,10 +123,8 @@ public sealed class AuthenticationGrain(
     public async ValueTask LogoutAsync(long userId)
     {
         logger.LogDebug("Logout attempt for UserId: {UserId}", userId);
-
         // 撤销用户的所有令牌
-        await tokenStorageService.RevokeAllTokensAsync(userId);
-
+        await tokenRepository.RevokeAllTokensAsync(userId);
         logger.LogDebug("Logout successful for UserId: {UserId}", userId);
     }
 }

@@ -24,7 +24,7 @@ public interface IConfirmRepository
     /// <param name="code">验证码</param>
     /// <param name="typeCode">验证码类型</param>
     /// <returns>是否缓存成功</returns>
-    ValueTask<bool> CacheConfirmCodeAsync(string unique, string code, ConfirmType typeCode);
+    ValueTask CacheConfirmCodeAsync(string unique, string code, ConfirmType typeCode);
 
     /// <summary>
     ///     检查验证码是否存在
@@ -41,5 +41,5 @@ public interface IConfirmRepository
     /// <param name="code">验证码</param>
     /// <returns>验证码是否正确</returns>
     /// <exception cref="AccountException">验证码已过期或不正确时抛出</exception>
-    ValueTask<bool> CheckConfirmCodeAsync(string unique, string code);
+    ValueTask CheckConfirmCodeAsync(string unique, string code);
 }
