@@ -16,9 +16,7 @@
 
     <ItemGroup>
         <Folder Include="DTOs\"/>
-        <Folder Include="Infrastructure\Data\EntityConfigurations\"/>
         <Folder Include="Infrastructure\ExternalServices\"/>
-        <Folder Include="Infrastructure\Repositories\"/>
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\shared\Nilarea.Contracts\Nilarea.Contracts.csproj"/>

@@ -293,7 +293,6 @@ FodyWeavers.xsd
 **/package-lock.json
 **/pnpm-lock.yaml
 
-**/Migrations
 **/wwwroot
 
 # Auto-generated type declarations

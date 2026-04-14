@@ -23,7 +23,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Folder Include="Commands\Blog\"/>
         <Folder Include="Events\"/>
+        <Folder Include="Responses\Blog\"/>
         <Folder Include="States\"/>
     </ItemGroup>
 

@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using NilArea.Common.Services;
 using StackExchange.Redis;
 using StackExchange.Redis.Extensions.Core.Abstractions;
 
@@ -10,19 +9,9 @@ namespace NilArea.Account.Infrastructure.Repositories;
 /// </summary>
 public class TokenRepository(
     ILogger<TokenRepository> logger,
-    IRedisDatabase redisDatabase
-) : ITokenRepository, IAsyncLifetime
+    IRedisClientFactory redisClientFactory
+) : ITokenRepository
 {
-    public async Task InitializeAsync()
-    {
-        logger.LogInformation("Initializing token storage service...");
-    }
-
-    public async Task DisposeAsync()
-    {
-        logger.LogInformation("Disposing token storage service...");
-    }
-
     public async Task StoreRefreshTokenAsync(long userId, string refreshToken, DateTimeOffset refreshTokenExpiry)
     {
         const string luaScript =
@@ -37,7 +26,7 @@ public class TokenRepository(
             """;
         var keys = new[] { UserTokenKey(userId), RefreshTokenKey(userId, refreshToken) };
         var args = new RedisValue[] { refreshToken, (int)(refreshTokenExpiry - DateTimeOffset.UtcNow).TotalSeconds };
-        await redisDatabase.Database.ScriptEvaluateAsync(luaScript, keys, args);
+        await redisClientFactory.GetDefaultRedisDatabase().Database.ScriptEvaluateAsync(luaScript, keys, args);
     }
 
     public async Task<bool> ValidateRefreshTokenAsync(long userId, string refreshToken, bool revoke = false)
@@ -69,7 +58,8 @@ public class TokenRepository(
             end
             return true
             """;
-        return (bool)await redisDatabase.Database.ScriptEvaluateAsync(revoke ? revokeScript : validateScript, keys,
+        return (bool)await redisClientFactory.GetDefaultRedisDatabase().Database.ScriptEvaluateAsync(
+            revoke ? revokeScript : validateScript, keys,
             [refreshToken]);
     }
 
@@ -86,7 +76,8 @@ public class TokenRepository(
             redis.call('SREM', set_key, token)
             return true
             """;
-        await redisDatabase.Database.ScriptEvaluateAsync(luaScript, keys, [refreshToken]);
+        await redisClientFactory.GetDefaultRedisDatabase().Database
+            .ScriptEvaluateAsync(luaScript, keys, [refreshToken]);
     }
 
     public async Task RevokeAllTokensAsync(long userId)
@@ -102,7 +93,7 @@ public class TokenRepository(
             end
             redis.call('DEL', set_key)
             """;
-        await redisDatabase.Database.ScriptEvaluateAsync(luaScript,
+        await redisClientFactory.GetDefaultRedisDatabase().Database.ScriptEvaluateAsync(luaScript,
             [UserTokenKey(userId), RefreshTokenKey(userId, string.Empty)]);
     }
 

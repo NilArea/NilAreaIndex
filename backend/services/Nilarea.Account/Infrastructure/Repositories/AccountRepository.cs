@@ -4,13 +4,10 @@ using MySql.Data.MySqlClient;
 using NilArea.Account.DTOs;
 using NilArea.Account.Infrastructure.Data;
 using NilArea.Account.Infrastructure.Data.Entities;
-using NilArea.Common.Services;
+using NilArea.Account.Infrastructure.Services;
 using NilArea.Common.Utils;
-using NilArea.Contracts;
 using NilArea.Contracts.Enums;
 using NilArea.Contracts.Exceptions;
-using StackExchange.Redis;
-using StackExchange.Redis.Extensions.Core.Abstractions;
 
 namespace NilArea.Account.Infrastructure.Repositories;
 
@@ -19,15 +16,11 @@ namespace NilArea.Account.Infrastructure.Repositories;
 /// </summary>
 public sealed class AccountRepository(
     ILogger<AccountRepository> logger,
-    AccountDbContext dbContext,
+    IDbContextFactory<AccountDbContext> dbContextFactory,
     IIdGenerator<long> idGenerator,
-    IRedisDatabase redisDatabase) : IAccountRepository, IAsyncLifetime
+    IBloomFilterServices bloomFilterServices
+) : IAccountRepository
 {
-    /// <summary>
-    ///     布隆过滤器,邮箱是否注册快速查询
-    /// </summary>
-    private static RedisKey BfAccount => "BF:Account";
-
     /// <summary>
     ///     检查账号是否存在
     /// </summary>
@@ -35,6 +28,7 @@ public sealed class AccountRepository(
     /// <returns>账号是否存在</returns>
     public async ValueTask<bool> ExistsAccountAsync(long userId)
     {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         return await dbContext.AccountUsers.AnyAsync(au =>
             au.UserId == userId && au.DeleteAt == null);
     }
@@ -46,7 +40,8 @@ public sealed class AccountRepository(
     /// <returns>账号是否存在</returns>
     public async ValueTask<bool> ExistsAccountAsync(string email)
     {
-        if (!await redisDatabase.Database.BloomExistsAsync(BfAccount, email)) return false;
+        if (!await bloomFilterServices.CheckEmailAsync(email)) return false;
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         return await dbContext.AccountUsers.AnyAsync(au =>
             au.Email == email && au.DeleteAt == null);
     }
@@ -58,6 +53,7 @@ public sealed class AccountRepository(
     /// <returns>账号信息</returns>
     public async ValueTask<AccountUserInfo?> GetAccountAsync(long userId)
     {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         return await dbContext.AccountUsers.AsNoTracking()
             .Where(au => au.UserId == userId && au.DeleteAt == null)
             .Select(au => new AccountUserInfo
@@ -78,6 +74,7 @@ public sealed class AccountRepository(
     /// <returns>账号信息</returns>
     public async ValueTask<AccountUserInfo?> GetAccountByEmailAsync(string email)
     {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         return await dbContext.AccountUsers.AsNoTracking()
             .Where(au => au.Email == email && au.DeleteAt == null)
             .Select(au => new AccountUserInfo
@@ -105,7 +102,7 @@ public sealed class AccountRepository(
             throw new AccountException("Email already registered", AccountAction.Register);
         var uid = idGenerator.NextId();
         var timeNow = DateTimeOffset.UtcNow;
-
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
         try
         {
@@ -121,7 +118,7 @@ public sealed class AccountRepository(
 
             await dbContext.AccountUsers.AddAsync(nau);
             await dbContext.SaveChangesAsync();
-            await redisDatabase.Database.BloomAddAsync(BfAccount, nau.Email);
+            await bloomFilterServices.AddEmailAsync(email);
             await transaction.CommitAsync();
         }
         catch (DbUpdateException ex) when (ex.InnerException is MySqlException { Number: 1062 })
@@ -155,6 +152,7 @@ public sealed class AccountRepository(
     /// <exception cref="AccountException">账号不存在时抛出</exception>
     public async ValueTask<AccountUserInfo> ChangePasswordAsync(long userId, string newPasswordHash)
     {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var user = await dbContext.AccountUsers
             .FirstOrDefaultAsync(au => au.UserId == userId && au.DeleteAt == null);
         if (user is null) throw new AccountException("Account not found", AccountAction.ChangePassword);
@@ -190,6 +188,7 @@ public sealed class AccountRepository(
     /// <returns>是否修改成功</returns>
     public async ValueTask<AccountUserInfo> ChangeEmailAsync(long userId, string newEmail)
     {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var user = await dbContext.AccountUsers
             .FirstOrDefaultAsync(au => au.UserId == userId && au.DeleteAt == null);
         if (user == null) throw new AccountException("Account not found", AccountAction.ChangeEmail);
@@ -204,7 +203,7 @@ public sealed class AccountRepository(
             user.Email = newEmail;
             user.UpdateAt = DateTimeOffset.UtcNow;
             await dbContext.SaveChangesAsync();
-            await redisDatabase.Database.BloomAddAsync(BfAccount, newEmail);
+            await bloomFilterServices.AddEmailAsync(newEmail);
             await transaction.CommitAsync();
         }
         catch (Exception ex)
@@ -230,6 +229,7 @@ public sealed class AccountRepository(
     /// <returns>是否删除成功</returns>
     public async ValueTask DeleteAccountAsync(long userId)
     {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var user = await dbContext.AccountUsers
             .FirstOrDefaultAsync(au => au.UserId == userId && au.DeleteAt == null);
         if (user == null) throw new AccountException("Account not found", AccountAction.Delete);
@@ -246,28 +246,5 @@ public sealed class AccountRepository(
             await transaction.RollbackAsync();
             throw new AccountException("Failed to delete account", AccountAction.Delete);
         }
-    }
-
-    /// <summary>
-    ///     初始化账号仓库
-    /// </summary>
-    /// <returns>任务完成状态</returns>
-    public async Task InitializeAsync()
-    {
-        var result = await redisDatabase.Database.BloomReserveAsync(BfAccount, 0.01d, 16384, true);
-        if (result.IsSuccess)
-            logger.LogInformation("Successful Initialize BloomFilter 'BF:Account'");
-        else
-            logger.LogError("Failed to Initialize BloomFilter 'BF:Account': {ErrorMessage}", result.ErrorMessage);
-    }
-
-    /// <summary>
-    ///     释放账号仓库资源
-    /// </summary>
-    /// <returns>任务完成状态</returns>
-    public Task DisposeAsync()
-    {
-        logger.LogInformation("Disposing Account Repository");
-        return Task.CompletedTask;
     }
 }

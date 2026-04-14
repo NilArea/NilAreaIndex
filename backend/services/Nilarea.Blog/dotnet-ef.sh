@@ -1,4 +1,6 @@
 #!/bin/bash
 
-BYPASS_ENVIRONMENT_VALIDATION=true dotnet-ef migrations add InitilizationBlog
-BYPASS_ENVIRONMENT_VALIDATION=true dotnet-ef database update
+export MYSQL_CONNECTION_STRING_FILE='/home/qianxi/source/repos/Web/nilarea/backend/services/secrets/mysql_connection_string'
+export BYPASS_ENVIRONMENT_VALIDATION=true
+
+dotnet-ef database update

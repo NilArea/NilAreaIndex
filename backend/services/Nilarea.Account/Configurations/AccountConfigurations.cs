@@ -39,7 +39,7 @@ public static class AccountConfigurations
         [RequireEnvironmentVariable("MYSQL_CONNECTION_STRING")]
         public IServiceCollection AddNilareaDbContext(IConfiguration configuration)
         {
-            collection.AddDbContextPool<AccountDbContext>((sp, builder) =>
+            collection.AddDbContextFactory<AccountDbContext>((sp, builder) =>
             {
                 var connectionString = configuration.GetSecretFromFile("MYSQL_CONNECTION_STRING");
                 builder.UseMySQL(connectionString);
@@ -70,11 +70,12 @@ public static class AccountConfigurations
         public IServiceCollection AddNilareaServices(IConfiguration configuration)
         {
             collection
-                .AddAsyncLifetimeSingleton<IAccountRepository, AccountRepository>()
-                .AddAsyncLifetimeSingleton<IConfirmRepository, ConfirmRepository>()
+                .AddScoped<IAccountRepository, AccountRepository>()
+                .AddScoped<IConfirmRepository, ConfirmRepository>()
+                .AddScoped<ITokenRepository, TokenRepository>()
                 .AddAsyncLifetimeSingleton<IEmailServices, EmailServices>()
                 .AddAsyncLifetimeSingleton<ITokenService, TokenService>()
-                .AddAsyncLifetimeSingleton<ITokenRepository, TokenRepository>()
+                .AddAsyncLifetimeSingleton<IBloomFilterServices, BloomFilterServices>()
                 .AddHostedService<ServiceInitializer>();
             return collection;
         }

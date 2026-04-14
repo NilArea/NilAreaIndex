@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NilArea.Account.Infrastructure.Data;
-using NilArea.Common.Services;
 using NilArea.Contracts.Enums;
 using NilArea.Contracts.Exceptions;
 using StackExchange.Redis;
@@ -14,24 +13,14 @@ namespace NilArea.Account.Infrastructure.Repositories;
 /// </summary>
 public sealed class ConfirmRepository(
     ILogger<ConfirmRepository> logger,
-    AccountDbContext dbContext,
-    IRedisDatabase redisDatabase
-) : IConfirmRepository, IAsyncLifetime
+    IDbContextFactory<AccountDbContext> dbContextFactory,
+    IRedisClientFactory redisClientFactory
+) : IConfirmRepository
 {
     /// <summary>
     ///     验证码缓存键前缀
     /// </summary>
     private static RedisKey ConfirmKeyPrefix => "NA:CK";
-
-    public async Task InitializeAsync()
-    {
-        logger.LogInformation("Initializing confirm repository...");
-    }
-
-    public async Task DisposeAsync()
-    {
-        logger.LogInformation("Disposing confirm repository...");
-    }
 
     /// <summary>
     ///     根据邮箱查找账号的验证密钥
@@ -41,6 +30,7 @@ public sealed class ConfirmRepository(
     /// <exception cref="AuthenticationException">邮箱未注册时抛出</exception>
     public async ValueTask<(long UserId, string PasswordSaltHash)> GetAccountVerifyAsync(string email)
     {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         var up = await dbContext.AccountUsers.AsNoTracking()
                      .Where(au => au.Email == email && au.DeleteAt == null)
                      .Select(au => new { au.UserId, au.PasswordSaltHash })
@@ -68,7 +58,8 @@ public sealed class ConfirmRepository(
             """;
         var keys = new[] { ConfirmKeyPrefix.Append(unique) };
         var args = new RedisValue[] { code, GetExpirationTime().TotalSeconds };
-        var result = await redisDatabase.Database.ScriptEvaluateAsync(luaScript, keys, args);
+        var result = await redisClientFactory.GetDefaultRedisDatabase().Database
+            .ScriptEvaluateAsync(luaScript, keys, args);
         switch (result.ToString())
         {
             case "ok":
@@ -99,7 +90,7 @@ public sealed class ConfirmRepository(
     public async ValueTask<bool> ExistConfirmCodeAsync(string unique)
     {
         var rk = ConfirmKeyPrefix.Append(unique);
-        return await redisDatabase.Database.KeyExistsAsync(rk);
+        return await redisClientFactory.GetDefaultRedisDatabase().Database.KeyExistsAsync(rk);
     }
 
     /// <summary>
@@ -124,7 +115,8 @@ public sealed class ConfirmRepository(
                 return 'incorrect'
             end
             """;
-        var result = await redisDatabase.Database.ScriptEvaluateAsync(script, [rk], [code]);
+        var result = await redisClientFactory.GetDefaultRedisDatabase().Database
+            .ScriptEvaluateAsync(script, [rk], [code]);
         switch (result.ToString())
         {
             case "expired":

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NilArea.Blog.Infrastructure.Data;
+using NilArea.Blog.Infrastructure.Repositories;
 using NilArea.Common;
 using NilArea.Common.Utils;
 using NilArea.Contracts;
@@ -37,7 +38,7 @@ public static class BlogConfigurations
         [RequireEnvironmentVariable("MYSQL_CONNECTION_STRING")]
         public IServiceCollection AddNilareaDbContext(IConfiguration configuration)
         {
-            collection.AddDbContextPool<BlogDbContext>((sp, builder) =>
+            collection.AddDbContextFactory<BlogDbContext>((sp, builder) =>
             {
                 var connectionString = configuration.GetSecretFromFile("MYSQL_CONNECTION_STRING");
                 builder.UseMySQL(connectionString);
@@ -68,6 +69,7 @@ public static class BlogConfigurations
         public IServiceCollection AddNilareaServices(IConfiguration configuration)
         {
             collection
+                .AddScoped<IBlogPostRepository, BlogPostRepository>()
                 .AddHostedService<ServiceInitializer>();
             return collection;
         }
