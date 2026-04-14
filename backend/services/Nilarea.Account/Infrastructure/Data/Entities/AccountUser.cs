@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NilArea.Account.Infrastructure.Data.Entities;
 
-public class AccountUser
+public sealed class AccountUser
 {
     /// <summary>
     ///     用户唯一ID
     /// </summary>
-    public required Guid UserId { get; init; }
+    public required long UserId { get; init; }
 
     /// <summary>
     ///     用户绑定邮箱
@@ -32,33 +32,17 @@ public class AccountUser
     ///     用户创建时间
     /// </summary>
     [DataType("datetime(6)")]
-    public required DateTime CreatedAt { get; init; }
+    public required DateTimeOffset CreatedAt { get; init; }
 
     /// <summary>
     ///     用户删除时间,null表示未删除
     /// </summary>
     [DataType("datetime(6)")]
-    public DateTime? DeleteAt { get; set; }
+    public DateTimeOffset? DeleteAt { get; set; }
 
     /// <summary>
     ///     用户信息更新时间
     /// </summary>
     [DataType("datetime(6)")]
-    public DateTime UpdateAt { get; set; }
-
-    /// <summary>
-    ///     用户最近登录时间
-    /// </summary>
-    [DataType("datetime(6)")]
-    public DateTime? LastLoginAt { get; set; }
-
-    /// <summary>
-    ///     用户所属组
-    /// </summary>
-    public virtual ICollection<AccountUserGroup> UserGroups { get; } = [];
-
-    /// <summary>
-    ///     用户权限
-    /// </summary>
-    public virtual ICollection<UserPermission> Permissions { get; } = [];
+    public DateTimeOffset UpdateAt { get; set; }
 }

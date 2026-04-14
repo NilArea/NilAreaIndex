@@ -1,23 +1,22 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using NilArea.Account.Infrastructure.Repositories;
-using NilArea.Account.Infrastructure.Services;
+using NilArea.Common.Services;
 
 namespace NilArea.Account;
 
 public class ServiceInitializer(
-    IAccountRepository accountRepository,
-    IEmailServices emailServices
+    IServiceProvider serviceProvider
 ) : IHostedService
 {
+    private List<IAsyncLifetime> Services { get; } = serviceProvider.GetServices<IAsyncLifetime>().ToList();
+
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await accountRepository.InitializeAsync();
-        await emailServices.InitializeAsync();
+        await Task.WhenAll(Services.Select(x => x.InitializeAsync()));
     }
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        await emailServices.DisposeAsync();
-        await accountRepository.DisposeAsync();
+        await Task.WhenAll(Services.Select(x => x.DisposeAsync()));
     }
 }

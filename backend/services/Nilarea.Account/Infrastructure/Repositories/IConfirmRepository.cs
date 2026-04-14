@@ -14,7 +14,7 @@ public interface IConfirmRepository
     /// <param name="email">邮箱</param>
     /// <returns>用户ID和密码哈希</returns>
     /// <exception cref="AuthenticationException">邮箱未注册时抛出</exception>
-    ValueTask<(Guid UserId, string PasswordSaltHash)> GetAccountVerifyAsync(string email);
+    ValueTask<(long UserId, string PasswordSaltHash)> GetAccountVerifyAsync(string email);
 
     /// <summary>
     ///     缓存验证码

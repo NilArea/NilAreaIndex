@@ -2,8 +2,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NilArea.Common;
+using NilArea.Common.Services;
 using NilArea.Contracts.Annotation;
 
 namespace NilArea.Account.Infrastructure.Services;
@@ -19,7 +21,7 @@ public interface ITokenService
     /// <param name="userId">用户ID</param>
     /// <param name="email">用户邮箱</param>
     /// <returns>访问令牌</returns>
-    string GenerateAccessToken(Guid userId, string email);
+    string GenerateAccessToken(long userId, string email);
 
     /// <summary>
     ///     生成刷新令牌
@@ -48,7 +50,10 @@ public interface ITokenService
 ///     令牌管理服务实现
 /// </summary>
 [EnvironmentVariableNameFormat(Suffix = "_FILE")]
-public class TokenService(IConfiguration configuration) : ITokenService
+public class TokenService(
+    ILogger<TokenService> logger,
+    IConfiguration configuration
+) : ITokenService, IAsyncLifetime
 {
     [RequireEnvironmentVariable("JWT_ACCESS_TOKEN_EXPIRY_MINUTES", DefaultValue = "15")]
     private readonly int _accessTokenExpiryMinutes =
@@ -63,13 +68,23 @@ public class TokenService(IConfiguration configuration) : ITokenService
     [RequireEnvironmentVariable("JWT_SECRET_KEY", ErrorMessage = "Jwt:SecretKey is required", FailFast = false)]
     private readonly string _secretKey = configuration.GetSecretFromFile("JWT_SECRET_KEY");
 
+    public async Task InitializeAsync()
+    {
+        logger.LogInformation("Initializing token service...");
+    }
+
+    public async Task DisposeAsync()
+    {
+        logger.LogInformation("Disposing token service...");
+    }
+
     /// <summary>
     ///     生成访问令牌
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <param name="email">用户邮箱</param>
     /// <returns>访问令牌</returns>
-    public string GenerateAccessToken(Guid userId, string email)
+    public string GenerateAccessToken(long userId, string email)
     {
         var claims = new[]
         {

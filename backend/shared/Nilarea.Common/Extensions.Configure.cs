@@ -1,4 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using NilArea.Common.Services;
 
 namespace NilArea.Common;
 
@@ -55,6 +58,31 @@ public static partial class Extensions
                 throw new KeyNotFoundException(
                     $"\"{key}\" is a required configure key, but the file \"{path}\" is not found");
             }
+        }
+    }
+
+    extension(IServiceCollection collection)
+    {
+        public IServiceCollection AddAsyncLifetimeSingleton<TService,
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            TImplementation>()
+            where TService : class
+            where TImplementation : class, TService, IAsyncLifetime
+        {
+            return collection
+                .AddSingleton<TImplementation>()
+                .AddSingleton<TService, TImplementation>(sp => sp.GetRequiredService<TImplementation>())
+                .AddSingleton<IAsyncLifetime, TImplementation>(sp => sp.GetRequiredService<TImplementation>());
+        }
+
+        public IServiceCollection AddAsyncLifetimeSingleton<
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+            TService>()
+            where TService : class, IAsyncLifetime
+        {
+            return collection
+                .AddSingleton<TService>()
+                .AddSingleton<IAsyncLifetime, TService>(sp => sp.GetRequiredService<TService>());
         }
     }
 }

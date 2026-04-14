@@ -25,7 +25,7 @@ public interface IAuthenticationGrain : IGrainWithIntegerKey
     /// <param name="refreshToken">刷新令牌</param>
     /// <returns>新的登录响应，包含新的访问令牌和刷新令牌</returns>
     /// <exception cref="AuthenticationException">刷新令牌无效时抛出</exception>
-    ValueTask<LoginAccountResponse> RefreshTokenAsync(Guid userId, string refreshToken);
+    ValueTask<LoginAccountResponse> RefreshTokenAsync(long userId, string refreshToken);
 
     /// <summary>
     ///     验证访问令牌
@@ -35,17 +35,9 @@ public interface IAuthenticationGrain : IGrainWithIntegerKey
     ValueTask<bool> ValidateTokenAsync(string token);
 
     /// <summary>
-    ///     验证用户权限
-    /// </summary>
-    /// <param name="userId">用户ID</param>
-    /// <param name="requiredPermissions">需要的权限</param>
-    /// <returns>用户是否拥有所有需要的权限</returns>
-    ValueTask<bool> VerifyPermissionAsync(Guid userId, ICollection<string> requiredPermissions);
-
-    /// <summary>
     ///     用户登出
     /// </summary>
     /// <param name="userId">用户ID</param>
     /// <returns>任务完成状态</returns>
-    ValueTask LogoutAsync(Guid userId);
+    ValueTask LogoutAsync(long userId);
 }

@@ -30,7 +30,7 @@ public static class BlogConfigurations
         public IServiceCollection AddNilareaTools(IConfiguration configuration)
         {
             return collection
-                .AddSingleton<IIdGenerator<Guid>, GuidGenerator>()
+                .AddSingleton<IIdGenerator<long>, SnowflakeIdGenerator>()
                 .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         }
 

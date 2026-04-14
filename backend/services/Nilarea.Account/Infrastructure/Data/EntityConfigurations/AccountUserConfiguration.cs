@@ -15,7 +15,7 @@ public class AccountUserConfiguration : IEntityTypeConfiguration<AccountUser>
 
         builder.Property(e => e.UserId)
             .IsRequired()
-            .ValueGeneratedNever(); // GUID7算法
+            .ValueGeneratedNever();
 
         /* ---------- 字段 ---------- */
         builder.Property(e => e.Email)
@@ -47,36 +47,16 @@ public class AccountUserConfiguration : IEntityTypeConfiguration<AccountUser>
             .HasColumnType("datetime(6)")
             .ValueGeneratedNever();
 
-        builder.Property(e => e.LastLoginAt)
-            .HasColumnType("datetime(6)")
-            .HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
         /* ---------- 索引 ---------- */
-        builder.HasIndex(e => e.Email)
-            .HasDatabaseName("IX_AccountUser_AllEmail")
-            .HasFilter($"{nameof(AccountUser.DeleteAt)} IS NULL")
+        builder.HasIndex(e => new { e.Email, e.DeleteAt })
+            .HasDatabaseName("IX_AccountUser_Email")
             .IsUnique();
 
         // 时间排序/分页
         builder.HasIndex(e => e.CreatedAt)
-            .HasDatabaseName("IX_AccountUser_CreatedAt")
-            .HasFilter($"{nameof(AccountUser.DeleteAt)} IS NULL");
+            .HasDatabaseName("IX_AccountUser_CreatedAt");
 
         builder.HasIndex(e => e.UpdateAt)
-            .HasDatabaseName("IX_AccountUser_UpdateAt")
-            .HasFilter($"{nameof(AccountUser.DeleteAt)} IS NULL");
-
-        builder.HasIndex(e => e.LastLoginAt)
-            .HasDatabaseName("IX_AccountUser_LastLoginAt")
-            .HasFilter($"{nameof(AccountUser.DeleteAt)} IS NULL");
-
-        /* --------- 导航属性 --------- */
-        builder.HasMany(u => u.UserGroups)
-            .WithOne(ug => ug.User)
-            .HasForeignKey(ug => ug.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-        builder.HasMany(e => e.Permissions)
-            .WithOne(up => up.User)
-            .HasForeignKey(up => up.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .HasDatabaseName("IX_AccountUser_UpdateAt");
     }
 }

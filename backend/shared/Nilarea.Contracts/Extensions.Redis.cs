@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+using NilArea.Contracts.Shared;
 using StackExchange.Redis;
 
 namespace NilArea.Contracts;
@@ -26,6 +28,7 @@ public static partial class Extensions
         ///     预期要插入的元素数量
         ///     <para>注意：实际容量会根据错误率自动调整</para>
         /// </param>
+        /// <param name="asSuccess"></param>
         /// <returns>表示异步操作的任务</returns>
         /// <exception cref="ArgumentNullException">
         ///     当 <paramref name="db" /> 或 <paramref name="key" /> 为null时抛出
@@ -46,10 +49,11 @@ public static partial class Extensions
         /// await db.BloomReserveAsync("user:filter", 0.01, 1000);
         /// </code>
         /// </example>
-        public async Task BloomReserveAsync(
+        public async Task<BloomReserveResult> BloomReserveAsync(
             RedisKey key,
-            double errorRate,
-            int initialCapacity)
+            [Range(0, 1)] double errorRate,
+            int initialCapacity,
+            bool asSuccess = false)
         {
             ArgumentNullException.ThrowIfNull(db);
             if (key == default(RedisKey))
@@ -58,16 +62,53 @@ public static partial class Extensions
                 throw new ArgumentOutOfRangeException(nameof(errorRate), errorRate, "错误率必须在 (0, 1] 范围内");
             if (initialCapacity <= 0)
                 throw new ArgumentOutOfRangeException(nameof(initialCapacity), initialCapacity, "初始容量必须大于0");
-            try
+            const string luaScript =
+                """
+                local key = KEYS[1]
+                local errorRate = tonumber(ARGV[1])
+                local capacity = tonumber(ARGV[2])
+
+                local result = redis.pcall('BF.RESERVE', key, errorRate, capacity)
+
+                -- 成功情况
+                if result == 'OK' then
+                    return {'ok'}
+                end
+
+                -- 错误情况：redis.pcall 返回的错误表
+                if type(result) == 'table' and result.err then
+                    local errMsg = result.err
+                    if string.find(errMsg, 'item exists') then
+                        return {'error', 'EXISTS', errMsg}
+                    elseif string.find(errMsg, 'syntax error') or string.find(errMsg, 'ERR') then
+                        return {'error', 'INVALID_ARGS', errMsg}
+                    else
+                        return {'error', 'UNKNOWN', errMsg}
+                    end
+                end
+
+                -- 其他意外情况（例如返回了非预期类型）
+                return {'error', 'UNEXPECTED', tostring(result)}
+                """;
+            var keys = new[] { key };
+            var args = new RedisValue[] { errorRate, initialCapacity };
+
+            var result = await db.ScriptEvaluateAsync(luaScript, keys, args).ConfigureAwait(false);
+            if (result.IsNull)
+                return BloomReserveResult.UnknownError("Lua script returned null");
+            var status = result[0];
+            if (!status.IsNull && status.ToString() == "ok")
+                return BloomReserveResult.Success();
+            if (result.Length != 3)
+                return BloomReserveResult.UnknownError("Unexpected response from Lua script");
+            var code = result[1].ToString();
+            var msg = result[2].ToString();
+            return code switch
             {
-                await db.ExecuteAsync("BF.RESERVE", key, errorRate, initialCapacity).ConfigureAwait(false);
-            }
-            catch (RedisServerException ex) when (ex.Message.Contains("ERR"))
-            {
-                // 特定错误处理
-                if (ex.Message.Contains("item exists")) throw new InvalidOperationException($"布隆过滤器已存在，键: {key}", ex);
-                throw new RedisException($"创建布隆过滤器失败，键: {key}, 错误率: {errorRate}, 容量: {initialCapacity}", ex);
-            }
+                "EXISTS" => BloomReserveResult.AlreadyExists(msg, asSuccess),
+                "INVALID_ARGS" => BloomReserveResult.InvalidArguments(msg),
+                _ => BloomReserveResult.UnknownError(msg)
+            };
         }
 
         /// <summary>

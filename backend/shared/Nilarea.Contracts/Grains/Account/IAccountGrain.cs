@@ -26,7 +26,7 @@ public interface IAccountGrain : IGrainWithIntegerKey
     /// <param name="typeCode">验证码类型</param>
     /// <returns>任务完成状态</returns>
     /// <exception cref="AccountException">发送失败时抛出</exception>
-    ValueTask CallConfirmKey(string email, ConfirmType typeCode = ConfirmType.Default);
+    ValueTask CallConfirmKeyAsync(string email, ConfirmType typeCode = ConfirmType.Default);
 
     /// <summary>
     ///     注册账号
@@ -50,7 +50,7 @@ public interface IAccountGrain : IGrainWithIntegerKey
     /// <param name="command">修改密码命令</param>
     /// <returns>任务完成状态</returns>
     /// <exception cref="AccountException">修改失败时抛出</exception>
-    ValueTask ChangePassword(ChangePasswordCommand command);
+    ValueTask ChangePasswordAsync(ChangePasswordCommand command);
 
     /// <summary>
     ///     获取账号信息
@@ -58,15 +58,14 @@ public interface IAccountGrain : IGrainWithIntegerKey
     /// <param name="userId">用户ID</param>
     /// <returns>账号信息响应</returns>
     /// <exception cref="AccountException">账号不存在时抛出</exception>
-    ValueTask<AccountInfoResponse> GetAccountInfoAsync(Guid userId);
+    ValueTask<AccountInfoResponse> GetAccountInfoAsync(long userId);
 
     /// <summary>
-    ///     更新账号信息
+    ///     修改账号邮箱
     /// </summary>
-    /// <param name="command">更新账号信息命令</param>
-    /// <returns>更新后的账号信息响应</returns>
-    /// <exception cref="AccountException">更新失败时抛出</exception>
-    ValueTask<AccountInfoResponse> UpdateAccountInfoAsync(UpdateAccountInfoCommand command);
+    /// <param name="command">修改账号邮箱命令</param>
+    /// <exception cref="AccountException">修改失败时抛出</exception>
+    ValueTask ChangeAccountEmailAsync(ChangeAccountEmailCommand command);
 
     /// <summary>
     ///     重置密码

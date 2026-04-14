@@ -4,12 +4,12 @@ namespace NilArea.Contracts.Commands.Account;
 
 [GenerateSerializer]
 [Alias("NilArea.Contracts.Commands.Account.ChangePasswordCommand")]
-public class ChangePasswordCommand
+public sealed record ChangePasswordCommand
 {
-    [Id(0)] public required string Email { get; set; }
-    [Id(2)] public required string Password { get; set; }
-    [Id(3)] public required string NewPassword { get; set; }
-    [Id(1)] public required string ConfirmKey { get; set; }
+    [Id(0)] public required string Email { get; init; }
+    [Id(2)] public required string Password { get; init; }
+    [Id(3)] public required string NewPassword { get; init; }
+    [Id(1)] public required string ConfirmKey { get; init; }
 }
 
 internal sealed class ChangePasswordValidator : AbstractValidator<ChangePasswordCommand>

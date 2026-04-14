@@ -4,7 +4,7 @@ using NilArea.Contracts.Enums;
 
 namespace NilArea.Account.Infrastructure.Services;
 
-public interface IEmailServices : IAsyncLifetime
+public interface IEmailServices
 {
     ValueTask SendEmailAsync(string targetEmail, string title, string message);
 }
@@ -21,7 +21,7 @@ public static class Helpers
     }
 }
 
-public class EmailServices(ILogger<EmailServices> logger) : IEmailServices
+public class EmailServices(ILogger<EmailServices> logger) : IEmailServices, IAsyncLifetime
 {
     public Task InitializeAsync()
     {

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NilArea.Account.Infrastructure.Data;
+using NilArea.Common.Services;
 using NilArea.Contracts.Enums;
 using NilArea.Contracts.Exceptions;
 using StackExchange.Redis;
@@ -15,12 +16,22 @@ public sealed class ConfirmRepository(
     ILogger<ConfirmRepository> logger,
     AccountDbContext dbContext,
     IRedisDatabase redisDatabase
-) : IConfirmRepository
+) : IConfirmRepository, IAsyncLifetime
 {
     /// <summary>
     ///     验证码缓存键前缀
     /// </summary>
     private static RedisKey ConfirmKeyPrefix => "NA:CK";
+
+    public async Task InitializeAsync()
+    {
+        logger.LogInformation("Initializing confirm repository...");
+    }
+
+    public async Task DisposeAsync()
+    {
+        logger.LogInformation("Disposing confirm repository...");
+    }
 
     /// <summary>
     ///     根据邮箱查找账号的验证密钥
@@ -28,12 +39,13 @@ public sealed class ConfirmRepository(
     /// <param name="email">邮箱</param>
     /// <returns>用户ID和密码哈希</returns>
     /// <exception cref="AuthenticationException">邮箱未注册时抛出</exception>
-    public async ValueTask<(Guid UserId, string PasswordSaltHash)> GetAccountVerifyAsync(string email)
+    public async ValueTask<(long UserId, string PasswordSaltHash)> GetAccountVerifyAsync(string email)
     {
         var up = await dbContext.AccountUsers.AsNoTracking()
-            .Where(au => au.Email == email && au.DeleteAt == null)
-            .Select(au => new { au.UserId, au.PasswordSaltHash })
-            .FirstOrDefaultAsync() ?? throw new AuthenticationException("Email does not registered");
+                     .Where(au => au.Email == email && au.DeleteAt == null)
+                     .Select(au => new { au.UserId, au.PasswordSaltHash })
+                     .FirstOrDefaultAsync() ??
+                 throw new AuthenticationException("Email does not registered", AuthenticationResult.Failed);
         return (up.UserId, up.PasswordSaltHash);
     }
 
@@ -87,20 +99,19 @@ public sealed class ConfirmRepository(
         if (!await redisDatabase.Database.KeyExistsAsync(rk))
             throw new AccountException("Verification code has expired");
 
-        const string script = """
-                              local current = redis.call('GET', KEYS[1])
-                              if current == ARGV[1] then
-                                  redis.call('DEL', KEYS[1])
-                                  return 1
-                              else
-                                  return 0
-                              end
-                              """;
+        const string script =
+            """
+            local current = redis.call('GET', KEYS[1])
+            if current == ARGV[1] then
+                redis.call('DEL', KEYS[1])
+                return 1
+            else
+                return 0
+            end
+            """;
         var ret = await redisDatabase.Database.ScriptEvaluateAsync(script, [rk], [code]);
         if (ret.IsNull) return false;
         var result = (bool)ret;
-        if (!result)
-            throw new AccountException("Verification code is incorrect");
-        return result;
+        return !result ? throw new AccountException("Verification code is incorrect") : result;
     }
 }

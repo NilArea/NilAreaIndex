@@ -22,7 +22,7 @@ public class AccountGrain(
     IValidator<RegisterAccountCommand> registerRequestValidator,
     IValidator<ChangePasswordCommand> changePasswordValidator,
     IValidator<DeleteAccountCommand> deleteAccountValidator,
-    IValidator<UpdateAccountInfoCommand> updateAccountInfoValidator,
+    IValidator<ChangeAccountEmailCommand> changeAccountEmailValidator,
     IValidator<ResetPasswordCommand> resetPasswordValidator,
     IPasswordHasher passwordHasher
 ) : Grain, IAccountGrain
@@ -50,17 +50,15 @@ public class AccountGrain(
         return await accountRepository.ExistsAccountAsync(email);
     }
 
-    public async ValueTask CallConfirmKey(string email, ConfirmType typeCode = ConfirmType.Default)
+    public async ValueTask CallConfirmKeyAsync(string email, ConfirmType typeCode = ConfirmType.Default)
     {
-        logger.LogDebug("Sending confirm key to email: {Email}, type: {TypeCode}", email, typeCode);
-
         var validate = await EmailValidator.ValidateAsync(email);
         if (!validate.IsValid)
         {
             logger.LogWarning("Email validation failed: {Email}, errors: {Errors}", email, validate.ToString());
             throw new AccountException(validate.ToString());
         }
-
+        logger.LogDebug("Sending confirm key to email: {Email}, type: {TypeCode}", email, typeCode);
         // 添加发送频率限制
         var rateLimitKey = $"rate_limit:confirm_key:{email}";
         if (await confirmRepository.ExistConfirmCodeAsync(rateLimitKey))
@@ -107,7 +105,7 @@ public class AccountGrain(
             throw new AccountException("Email already registered", AccountAction.Register);
         }
 
-        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmCode))
+        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey))
         {
             logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
             throw new AccountException("Confirm Code is invalid", AccountAction.Register);
@@ -157,17 +155,12 @@ public class AccountGrain(
         }
 
         // 删除账号
-        var result = await accountRepository.DeleteAccountAsync(accountVerify.UserId);
-        if (!result)
-        {
-            logger.LogError("Failed to delete account for email: {Email}", command.Email);
-            throw new AccountException("Failed to delete account");
-        }
+        await accountRepository.DeleteAccountAsync(accountVerify.UserId);
 
         logger.LogDebug("Account deleted successfully: {Email}, UserId: {UserId}", command.Email, accountVerify.UserId);
     }
 
-    public async ValueTask ChangePassword(ChangePasswordCommand command)
+    public async ValueTask ChangePasswordAsync(ChangePasswordCommand command)
     {
         logger.LogDebug("Changing password for email: {Email}", command.Email);
 
@@ -202,7 +195,7 @@ public class AccountGrain(
             accountVerify.UserId);
     }
 
-    public async ValueTask<AccountInfoResponse> GetAccountInfoAsync(Guid userId)
+    public async ValueTask<AccountInfoResponse> GetAccountInfoAsync(long userId)
     {
         logger.LogDebug("Getting account info for UserId: {UserId}", userId);
 
@@ -221,46 +214,28 @@ public class AccountGrain(
             UserId = account.UserId,
             Email = account.Email,
             Username = account.UserName,
-            CreatedAt = account.CreatedAt
+            CreatedAt = account.CreatedAt,
+            UpdatedAt = account.UpdatedAt
         };
     }
 
-    public async ValueTask<AccountInfoResponse> UpdateAccountInfoAsync(UpdateAccountInfoCommand command)
+    public async ValueTask ChangeAccountEmailAsync(ChangeAccountEmailCommand command)
     {
-        logger.LogDebug("Updating account info for UserId: {UserId}", command.UserId);
+        logger.LogDebug("Changing account email for user id: {UserId}", command.UserId);
 
-        var validate = await updateAccountInfoValidator.ValidateAsync(command);
+        var validate = await changeAccountEmailValidator.ValidateAsync(command);
         if (!validate.IsValid)
         {
-            logger.LogWarning("Update account info validation failed for UserId: {UserId}, errors: {Errors}",
-                command.UserId, validate.ToString());
+            logger.LogWarning("Change account email validation failed for user id: {UserId}, errors: {Errors}",
+                command.UserId,
+                validate.ToString());
             throw new AccountException(validate.ToString());
         }
 
-        var account = await accountRepository.GetAccountAsync(command.UserId);
-        if (account == null)
-        {
-            logger.LogWarning("Account not found for UserId: {UserId}", command.UserId);
-            throw new AccountException("Account not found");
-        }
+        await accountRepository.ChangeEmailAsync(command.UserId, command.NewEmail);
 
-        if (!string.IsNullOrEmpty(command.Username))
-            account.UserName = command.Username;
-
-        if (!string.IsNullOrEmpty(command.Email)) account.Email = command.Email;
-
-        var updatedAccount = await accountRepository.UpdateAccountAsync(account);
-
-        logger.LogDebug("Account info updated successfully for UserId: {UserId}, Email: {Email}", command.UserId,
-            updatedAccount.Email);
-
-        return new AccountInfoResponse
-        {
-            UserId = updatedAccount.UserId,
-            Email = updatedAccount.Email,
-            Username = updatedAccount.UserName,
-            CreatedAt = updatedAccount.CreatedAt
-        };
+        logger.LogDebug("Account email changed successfully for user id: {UserId}, new email: {NewEmail}",
+            command.UserId, command.NewEmail);
     }
 
     public async ValueTask ResetPasswordAsync(ResetPasswordCommand command)
@@ -275,7 +250,7 @@ public class AccountGrain(
             throw new AccountException(validate.ToString());
         }
 
-        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmCode))
+        if (!await confirmRepository.CheckConfirmCodeAsync(command.Email, command.ConfirmKey))
         {
             logger.LogWarning("Invalid confirm code for email: {Email}", command.Email);
             throw new AccountException("Confirm Code is invalid");

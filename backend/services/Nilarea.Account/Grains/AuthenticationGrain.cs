@@ -18,7 +18,6 @@ public sealed class AuthenticationGrain(
     ILogger<AuthenticationGrain> logger,
     IAccountRepository accountRepository,
     IConfirmRepository confirmRepository,
-    IPermissionRepository permissionRepository,
     IValidator<LoginAccountCommand> loginRequestValidator,
     IPasswordHasher passwordHasher,
     ITokenService tokenService,
@@ -87,27 +86,7 @@ public sealed class AuthenticationGrain(
         }
     }
 
-    public async ValueTask<bool> VerifyPermissionAsync(Guid userId, ICollection<string> requiredPermissions)
-    {
-        logger.LogDebug(
-            "Permission verification attempt for UserId: {UserId}, required permissions: {RequiredPermissions}", userId,
-            string.Join(", ", requiredPermissions));
-
-        if (requiredPermissions.Count is 0)
-        {
-            logger.LogDebug("No permissions required for UserId: {UserId}", userId);
-            return true;
-        }
-
-        var permissions = await permissionRepository.GetAllPermissionAsync(userId);
-        var hasPermission = !requiredPermissions.Except(permissions.Select(p => p.PermissionName)).Any();
-
-        logger.LogDebug("Permission verification result for UserId: {UserId}: {HasPermission}", userId, hasPermission);
-
-        return hasPermission;
-    }
-
-    public async ValueTask<LoginAccountResponse> RefreshTokenAsync(Guid userId, string refreshToken)
+    public async ValueTask<LoginAccountResponse> RefreshTokenAsync(long userId, string refreshToken)
     {
         logger.LogDebug("Refresh token attempt for UserId: {UserId}", userId);
 
@@ -146,7 +125,7 @@ public sealed class AuthenticationGrain(
         };
     }
 
-    public async ValueTask LogoutAsync(Guid userId)
+    public async ValueTask LogoutAsync(long userId)
     {
         logger.LogDebug("Logout attempt for UserId: {UserId}", userId);
 

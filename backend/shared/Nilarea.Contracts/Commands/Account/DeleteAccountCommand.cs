@@ -4,11 +4,11 @@ namespace NilArea.Contracts.Commands.Account;
 
 [GenerateSerializer]
 [Alias("NilArea.Contracts.Commands.Account.DeleteAccountCommand")]
-public class DeleteAccountCommand
+public sealed record DeleteAccountCommand
 {
-    [Id(0)] public required string Email { get; set; }
-    [Id(2)] public required string Password { get; set; }
-    [Id(1)] public required string ConfirmKey { get; set; }
+    [Id(0)] public required string Email { get; init; }
+    [Id(2)] public required string Password { get; init; }
+    [Id(1)] public required string ConfirmKey { get; init; }
 }
 
 internal sealed class DeleteAccountValidator : AbstractValidator<DeleteAccountCommand>

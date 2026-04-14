@@ -41,7 +41,7 @@ public class ApiAuthController(
     {
         await EmailValidator.ValidateAndThrowAsync(email);
         var ag = clusterClient.GetGrain<IAccountGrain>(0);
-        await ag.CallConfirmKey(email, ConfirmType.Initial);
+        await ag.CallConfirmKeyAsync(email, ConfirmType.Initial);
         return NoContent();
     }
 

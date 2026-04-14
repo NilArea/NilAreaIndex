@@ -32,7 +32,7 @@ public static class AccountConfigurations
         public IServiceCollection AddNilareaTools(IConfiguration configuration)
         {
             return collection
-                .AddSingleton<IIdGenerator<Guid>, GuidGenerator>()
+                .AddSingleton<IIdGenerator<long>, SnowflakeIdGenerator>()
                 .AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         }
 
@@ -70,12 +70,11 @@ public static class AccountConfigurations
         public IServiceCollection AddNilareaServices(IConfiguration configuration)
         {
             collection
-                .AddSingleton<IAccountRepository, AccountRepository>()
-                .AddSingleton<IPermissionRepository, PermissionRepository>()
-                .AddSingleton<IConfirmRepository, ConfirmRepository>()
-                .AddSingleton<IEmailServices, EmailServices>()
-                .AddSingleton<ITokenService, TokenService>()
-                .AddSingleton<ITokenStorageService, TokenStorageService>()
+                .AddAsyncLifetimeSingleton<IAccountRepository, AccountRepository>()
+                .AddAsyncLifetimeSingleton<IConfirmRepository, ConfirmRepository>()
+                .AddAsyncLifetimeSingleton<IEmailServices, EmailServices>()
+                .AddAsyncLifetimeSingleton<ITokenService, TokenService>()
+                .AddAsyncLifetimeSingleton<ITokenStorageService, TokenStorageService>()
                 .AddHostedService<ServiceInitializer>();
             return collection;
         }

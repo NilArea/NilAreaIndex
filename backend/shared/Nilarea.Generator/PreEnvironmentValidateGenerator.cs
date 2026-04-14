@@ -63,7 +63,8 @@ public class PreEnvironmentValidateGenerator : IIncrementalGenerator
         writer.WriteLine("public static void ValidateEnvironmentVariables()");
         writer.WriteLine("{");
         writer.Indent++;
-        writer.WriteLine("if (System.Environment.GetEnvironmentVariable(\"BYPASS_ENVIRONMENT_VALIDATION\") is not null)");
+        writer.WriteLine(
+            "if (System.Environment.GetEnvironmentVariable(\"BYPASS_ENVIRONMENT_VALIDATION\") is not null)");
         writer.WriteLine("{");
         writer.Indent++;
         writer.WriteLine("return;");
