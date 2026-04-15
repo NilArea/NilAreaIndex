@@ -7,6 +7,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["backend/services/Nilarea.Blog/Nilarea.Blog.csproj", "backend/services/Nilarea.Blog/"]
 COPY ["backend/shared/Nilarea.Contracts/Nilarea.Contracts.csproj", "backend/shared/Nilarea.Contracts/"]
+COPY ["backend/shared/Nilarea.Generator/Nilarea.Generator.csproj", "backend/shared/Nilarea.Generator/"]
 COPY ["backend/shared/Nilarea.Common/Nilarea.Common.csproj", "backend/shared/Nilarea.Common/"]
 RUN dotnet restore "backend/services/Nilarea.Blog/Nilarea.Blog.csproj"
 COPY . .

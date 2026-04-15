@@ -18,11 +18,13 @@
         <Folder Include="DTOs\"/>
         <Folder Include="Infrastructure\ExternalServices\"/>
     </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\..\shared\Nilarea.Contracts\Nilarea.Contracts.csproj"/>
         <PackageReference Include="Microsoft.Orleans.Server" Version="10.0.1"/>
         <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" Version="10.0.1"/>
 
+        <PackageReference Include="Microsoft.Orleans.Clustering.Redis" Version="10.1.0"/>
         <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="10.0.1"/>
         <PackageReference Include="Microsoft.Orleans.Reminders.AdoNet" Version="10.0.1"/>
         <PackageReference Include="Microsoft.Orleans.Streaming" Version="10.0.1"/>

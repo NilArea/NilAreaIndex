@@ -7,8 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ===== 基础设施 =====
 builder
-    .ConfigureNilareaOrleans() //核心数据操作
-    .ConfigureRedis() //快速简单检索
+    .ConfigureNilareaOrleans() //核心Orleans配置
     .ConfigureOpenSearch(); //快速复杂检索
 // ===== 数据验证 =====
 builder
@@ -36,7 +35,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler();
     app.UseHsts();
 }
 
@@ -58,8 +57,6 @@ app.UseAuthorization();
 app.MapOrleansDashboard("/orleans");
 // API 终结点映射
 app.MapControllers();
-// SPA 回退路由
-app.MapFallbackToFile("index.html");
 
 #endregion
 

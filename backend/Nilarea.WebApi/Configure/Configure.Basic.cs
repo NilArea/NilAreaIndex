@@ -4,6 +4,7 @@ using OpenSearch.Client;
 using OpenSearch.Net;
 using Orleans.Configuration;
 using Orleans.Dashboard;
+using StackExchange.Redis;
 using StackExchange.Redis.Extensions.Core.Configuration;
 using StackExchange.Redis.Extensions.Newtonsoft;
 
@@ -13,12 +14,14 @@ internal static partial class Configure
 {
     extension(IHostApplicationBuilder builder)
     {
-        [RequireEnvironmentVariable("CLUSTER_ID", DefaultValue = "nilarea-cluster")]
+        [RequireEnvironmentVariable("CLUSTER_ID", DefaultValue = "nilarea")]
+        [RequireEnvironmentVariable("SERVICE_ID", DefaultValue = "default")]
         public IHostApplicationBuilder ConfigureNilareaOrleans()
         {
             builder.UseOrleansClient(clientBuilder =>
             {
                 clientBuilder
+                    .ConfigureStorage()
                     .AddDashboard();
 #if DEBUG
                 clientBuilder
@@ -26,27 +29,10 @@ internal static partial class Configure
                     {
                         var configuration = builder.Configuration;
                         options.ClusterId = configuration.SafeGetConfigureValue("CLUSTER_ID");
-                    })
-                    .UseLocalhostClustering();
+                        options.ServiceId = configuration.SafeGetConfigureValue("SERVICE_ID");
+                    });
 #endif
             });
-            return builder;
-        }
-
-        [RequireEnvironmentVariable("REDIS_CLUSTER")]
-        [EnvironmentVariableNameFormat(Suffix = "_FILE")]
-        public IHostApplicationBuilder ConfigureRedis()
-        {
-            builder.Services
-                .AddStackExchangeRedisExtensions<NewtonsoftSerializer>(sp =>
-                {
-                    var configuration = builder.Configuration;
-                    var conf = new RedisConfiguration
-                    {
-                        ConnectionString = configuration.GetSecretFromFile("REDIS_CLUSTER")
-                    };
-                    return [conf];
-                });
             return builder;
         }
 
@@ -63,6 +49,32 @@ internal static partial class Configure
                 connectionSettings.ServerCertificateValidationCallback((sender, cert, chain, errors) => true);
             builder.Services.AddSingleton<IOpenSearchClient>(new OpenSearchClient(connectionSettings));
             return builder;
+        }
+    }
+
+    extension(IClientBuilder clientBuilder)
+    {
+        [RequireEnvironmentVariable("REDIS_CLUSTER")]
+        [EnvironmentVariableNameFormat(Suffix = "_FILE")]
+        public IClientBuilder ConfigureStorage()
+        {
+            var connectionString = clientBuilder.Configuration.GetSecretFromFile("REDIS_CLUSTER");
+            clientBuilder.Services
+                .AddStackExchangeRedisExtensions<NewtonsoftSerializer>(sp =>
+                {
+                    var conf = new RedisConfiguration
+                    {
+                        ConnectionString = connectionString
+                    };
+                    return [conf];
+                });
+#if DEBUG
+            clientBuilder.UseRedisClustering(options =>
+            {
+                options.ConfigurationOptions = ConfigurationOptions.Parse(connectionString);
+            });
+#endif
+            return clientBuilder;
         }
     }
 }

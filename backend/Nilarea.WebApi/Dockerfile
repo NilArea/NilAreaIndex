@@ -8,8 +8,9 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["backend/Nilarea.WebApi/Nilarea.WebApi.csproj", "backend/Nilarea.WebApi/"]
-COPY ["backend/shared/Nilarea.Common/Nilarea.Common.csproj", "backend/shared/Nilarea.Common/"]
 COPY ["backend/shared/Nilarea.Contracts/Nilarea.Contracts.csproj", "backend/shared/Nilarea.Contracts/"]
+COPY ["backend/shared/Nilarea.Common/Nilarea.Common.csproj", "backend/shared/Nilarea.Common/"]
+COPY ["backend/shared/Nilarea.Generator/Nilarea.Generator.csproj", "backend/shared/Nilarea.Generator/"]
 RUN dotnet restore "backend/Nilarea.WebApi/Nilarea.WebApi.csproj"
 COPY . .
 WORKDIR "/src/backend/Nilarea.WebApi"

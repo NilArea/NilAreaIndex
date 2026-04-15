@@ -1,17 +1,16 @@
-using System.Net;
 using Microsoft.Extensions.Hosting;
 using NilArea.Blog.Configurations;
 using NilArea.Common;
 using NilArea.Contracts.Annotation;
+using Orleans.Configuration;
 using Orleans.Dashboard;
 
 var builder = CreateHostBuilder(args);
 var host = builder.Build();
 await host.RunAsync();
 
-[EnvironmentVariableNameFormat(Prefix = "NIL_")]
-[RequireEnvironmentVariable("CLUSTER_ID", DefaultValue = "nilarea-cluster")]
-[RequireEnvironmentVariable("SERVICE_ID", DefaultValue = "nilarea-blog")]
+[RequireEnvironmentVariable("CLUSTER_ID", DefaultValue = "nilarea")]
+[RequireEnvironmentVariable("SERVICE_ID", DefaultValue = "default")]
 static IHostBuilder CreateHostBuilder(string[] args)
 {
     var builder = Host.CreateDefaultBuilder(args);
@@ -24,18 +23,21 @@ static IHostBuilder CreateHostBuilder(string[] args)
             .ConfigureServices(services => services
                 .AddDataValidators(configuration)
                 .AddNilareaTools(configuration)
-                .AddNilareaDbContext(configuration)
-                .AddNilareaCache(configuration)
                 .AddNilareaServices(configuration))
+            .ConfigureStorage()
             .AddDashboard();
 #if DEBUG
         siloBuilder
-            .UseLocalhostClustering(
-                primarySiloEndpoint: new IPEndPoint(IPAddress.Parse("127.0.0.1"), 11111),
-                siloPort: 11112,
-                gatewayPort: 30001,
-                clusterId: configuration.SafeGetConfigureValue("CLUSTER_ID"),
-                serviceId: configuration.SafeGetConfigureValue("SERVICE_ID"));
+            .Configure<ClusterOptions>(options =>
+            {
+                options.ClusterId = configuration.SafeGetConfigureValue("CLUSTER_ID");
+                options.ServiceId = configuration.SafeGetConfigureValue("SERVICE_ID");
+            })
+            .Configure<EndpointOptions>(options =>
+            {
+                options.GatewayPort = 30001;
+                options.SiloPort = 11112;
+            });
 #else
         siloBuilder
             .UseKubernetesHosting();

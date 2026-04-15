@@ -6,6 +6,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["backend/services/Nilarea.Account/Nilarea.Account.csproj", "backend/services/Nilarea.Account/"]
+COPY ["backend/shared/Nilarea.Generator/Nilarea.Generator.csproj", "backend/shared/Nilarea.Generator/"]
 COPY ["backend/shared/Nilarea.Contracts/Nilarea.Contracts.csproj", "backend/shared/Nilarea.Contracts/"]
 COPY ["backend/shared/Nilarea.Common/Nilarea.Common.csproj", "backend/shared/Nilarea.Common/"]
 RUN dotnet restore "backend/services/Nilarea.Account/Nilarea.Account.csproj"
