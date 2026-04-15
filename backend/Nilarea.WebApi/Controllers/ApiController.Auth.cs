@@ -23,6 +23,8 @@ public class ApiAuthController(
 {
     private static readonly InlineValidator<string> EmailValidator;
 
+    private static readonly RedisKey BfAccount = "BF:Account";
+
     static ApiAuthController()
     {
         var validator = new InlineValidator<string>();
@@ -31,8 +33,6 @@ public class ApiAuthController(
             .EmailAddress();
         EmailValidator = validator;
     }
-
-    private static RedisKey BfAccount => StaticValues.BfAccount;
 
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

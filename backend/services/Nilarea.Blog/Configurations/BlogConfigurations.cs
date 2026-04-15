@@ -104,13 +104,11 @@ public static class BlogConfigurations
                 factory.UseMySQL(mysqlConnectionString);
             });
             var redisConnectionString = siloBuilder.Configuration.GetSecretFromFile("REDIS_CLUSTER");
-#if DEBUG
             // 配置Orleans集群发现
             siloBuilder.UseRedisClustering(options =>
             {
                 options.ConfigurationOptions = ConfigurationOptions.Parse(redisConnectionString);
             });
-#endif
             // 配置Orleans缓存
             siloBuilder.Services
                 .AddStackExchangeRedisExtensions<NewtonsoftSerializer>(sp =>

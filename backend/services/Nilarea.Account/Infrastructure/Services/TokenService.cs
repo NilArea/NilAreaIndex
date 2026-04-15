@@ -49,7 +49,6 @@ public interface ITokenService
 /// <summary>
 ///     令牌管理服务实现
 /// </summary>
-[EnvironmentVariableNameFormat(Suffix = "_FILE")]
 public class TokenService(
     ILogger<TokenService> logger,
     IConfiguration configuration
@@ -60,16 +59,19 @@ public class TokenService(
         configuration.SafeGetConfigureValue("JWT_ACCESS_TOKEN_EXPIRY_MINUTES", 15);
 
     [RequireEnvironmentVariable("JWT_AUDIENCE", ErrorMessage = "Jwt:Audience is required")]
+    [EnvironmentVariableNameFormat(Suffix = "_FILE")]
     private readonly string _audience = configuration.GetSecretFromFile("JWT_AUDIENCE");
 
     [RequireEnvironmentVariable("JWT_ISSUER", ErrorMessage = "Jwt:Issuer is required")]
+    [EnvironmentVariableNameFormat(Suffix = "_FILE")]
     private readonly string _issuer = configuration.GetSecretFromFile("JWT_ISSUER");
 
     [RequireEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRY_DAYS", DefaultValue = "3")]
     private readonly int _refreshTokenExpiryDays =
         configuration.SafeGetConfigureValue("JWT_REFRESH_TOKEN_EXPIRY_DAYS", 3);
 
-    [RequireEnvironmentVariable("JWT_SECRET_KEY", ErrorMessage = "Jwt:SecretKey is required", FailFast = false)]
+    [RequireEnvironmentVariable("JWT_SECRET_KEY", ErrorMessage = "Jwt:SecretKey is required")]
+    [EnvironmentVariableNameFormat(Suffix = "_FILE")]
     private readonly string _secretKey = configuration.GetSecretFromFile("JWT_SECRET_KEY");
 
     public async Task InitializeAsync()

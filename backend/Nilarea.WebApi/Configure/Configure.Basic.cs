@@ -23,7 +23,6 @@ internal static partial class Configure
                 clientBuilder
                     .ConfigureStorage()
                     .AddDashboard();
-#if DEBUG
                 clientBuilder
                     .Configure<ClusterOptions>(options =>
                     {
@@ -31,17 +30,21 @@ internal static partial class Configure
                         options.ClusterId = configuration.SafeGetConfigureValue("CLUSTER_ID");
                         options.ServiceId = configuration.SafeGetConfigureValue("SERVICE_ID");
                     });
-#endif
             });
             return builder;
         }
 
+        [RequireEnvironmentVariable("OPENSEARCH_CLUSTER")]
+        [RequireEnvironmentVariable("OPENSEARCH_USER")]
+        [RequireEnvironmentVariable("OPENSEARCH_PASSWORD")]
+        [EnvironmentVariableNameFormat(Suffix = "_FILE")]
         public IHostApplicationBuilder ConfigureOpenSearch()
         {
-            var config = builder.Configuration.GetSection("OpenSearch");
-            var singleNodePool = new SingleNodeConnectionPool(new Uri(config.SafeGetConfigureValue("Uri")));
+            var singleNodePool =
+                new SingleNodeConnectionPool(new Uri(builder.Configuration.GetSecretFromFile("OPENSEARCH_CLUSTER")));
             var connectionSettings = new ConnectionSettings(singleNodePool)
-                .BasicAuthentication(config.SafeGetConfigureValue("User"), config.SafeGetConfigureValue("Password"))
+                .BasicAuthentication(builder.Configuration.GetSecretFromFile("OPENSEARCH_USER"),
+                    builder.Configuration.GetSecretFromFile("OPENSEARCH_PASSWORD"))
                 .SniffOnStartup(false)
                 .SniffOnConnectionFault(false)
                 .SniffLifeSpan(null);
@@ -68,12 +71,10 @@ internal static partial class Configure
                     };
                     return [conf];
                 });
-#if DEBUG
             clientBuilder.UseRedisClustering(options =>
             {
                 options.ConfigurationOptions = ConfigurationOptions.Parse(connectionString);
             });
-#endif
             return clientBuilder;
         }
     }

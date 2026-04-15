@@ -27,8 +27,75 @@ secrets:
     file: ./secrets/cert.crt
   private_key:
     file: ./secrets/cert.key
+  mysql_connection_string:
+    file: ./secrets/mysql_connection_string
+  redis_connection_string:
+    file: ./secrets/redis_connection_string
+  jwt_secret_key:
+    file: ./secrets/jwt_secret_key
+  opensearch_password:
+    file: ./secrets/opensearch_password
 
 services:
+  nilarea-account:
+    build:
+      context: ../../backend/services/Nilarea.Account
+      dockerfile: Dockerfile
+      target: final
+    container_name: nilarea-account
+    secrets:
+      - mysql_connection_string
+      - redis_connection_string
+      - jwt_secret_key
+    environment:
+      MYSQL_CONNECTION_STRING_FILE: /run/secrets/mysql_connection_string
+      REDIS_CLUSTER_FILE: /run/secrets/redis_connection_string
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_SECRET_KEY_FILE: /run/secrets/jwt_secret_key
+    depends_on:
+      - mysql-shard
+      - redis-proxy
+    networks:
+      - nilarea-cluster-net
+  nilarea-blog:
+    build:
+      context: ../../backend/services/Nilarea.Blog
+      dockerfile: Dockerfile
+      target: final
+    container_name: nilarea-blog
+    secrets:
+      - mysql_connection_string
+      - redis_connection_string
+    environment:
+      MYSQL_CONNECTION_STRING_FILE: /run/secrets/mysql_connection_string
+      REDIS_CLUSTER_FILE: /run/secrets/redis_connection_string
+    depends_on:
+      - mysql-shard
+      - redis-proxy
+    networks:
+      - nilarea-cluster-net
+  nilarea-web:
+    build:
+      context: ../../backend/Nilarea.WebApi
+      dockerfile: Dockerfile
+      target: final
+    container_name: nilarea-web
+    secrets:
+      - redis_connection_string
+      - opensearch_password
+    environment:
+      REDIS_CLUSTER_FILE: /run/secrets/redis_connection_string
+      OPENSEARCH_CLUSTER: "https://nginx:9200"
+      OPENSEARCH_USER: "admin"
+      OPENSEARCH_PASSWORD_FILE: /run/secrets/opensearch_password
+    ports:
+      - 8080:8080
+    depends_on:
+      - redis-proxy
+      - nginx
+    networks:
+      - nilarea-cluster-net
   mysql-shard:
     extends:
       file: docker-compose.base.yaml
@@ -44,8 +111,11 @@ services:
       - ./configs/mysql/scripts:/docker-entrypoint-initdb.d
     ports:
       - 3300:3306
+    networks:
+      - nilarea-cluster-net
   redis-proxy:
     image: envoyproxy/envoy:dev-d568d57938c13d36f46405290d6a2a5e2ceed710
+    container_name: redis-proxy
     ports:
       - 6379:6379
       - 8001:8001

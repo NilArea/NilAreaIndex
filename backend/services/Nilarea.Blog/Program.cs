@@ -26,21 +26,19 @@ static IHostBuilder CreateHostBuilder(string[] args)
                 .AddNilareaServices(configuration))
             .ConfigureStorage()
             .AddDashboard();
-#if DEBUG
         siloBuilder
             .Configure<ClusterOptions>(options =>
             {
                 options.ClusterId = configuration.SafeGetConfigureValue("CLUSTER_ID");
                 options.ServiceId = configuration.SafeGetConfigureValue("SERVICE_ID");
-            })
+            });
+#if DEBUG
+        siloBuilder
             .Configure<EndpointOptions>(options =>
             {
-                options.GatewayPort = 30001;
-                options.SiloPort = 11112;
+                options.GatewayPort = 30002;
+                options.SiloPort = 11113;
             });
-#else
-        siloBuilder
-            .UseKubernetesHosting();
 #endif
     });
     return builder;

@@ -7,7 +7,7 @@ namespace NilArea.Common;
 
 public static partial class Extensions
 {
-    private static readonly Dictionary<string, string> _secretCache = new();
+    private static readonly Dictionary<string, string> SecretCache = new();
 
     extension(IConfiguration configuration)
     {
@@ -48,7 +48,7 @@ public static partial class Extensions
         {
             var secret = configuration[key];
             if (!string.IsNullOrWhiteSpace(secret)) return secret;
-            if (_secretCache.TryGetValue(key, out var value))
+            if (SecretCache.TryGetValue(key, out var value))
                 return value;
             var path = configuration[key + defaultSuffix];
             if (string.IsNullOrWhiteSpace(path))
@@ -56,7 +56,7 @@ public static partial class Extensions
             try
             {
                 value = File.ReadAllText(Path.GetFullPath(path));
-                _secretCache[key] = value;
+                SecretCache[key] = value;
                 return value;
             }
             catch (Exception _)
